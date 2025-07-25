@@ -12,8 +12,11 @@ async function startDance() {
 
   // 5. Подключаем видеопоток из камеры к нашему видеоэлементу
   videoElement.srcObject = stream;
+  // 3. Ждём, когда видео будет готово, и только потом вызываем play()
+  videoElement.onloadedmetadata = async () => {
   videoElement.play();
-  videoElement.style.display = "block"; // Показываем видео (если было скрыто)
+  videoElement.style.display = "block"; // Показываем видео
+};
 
   // 6. Создаём объект MediaPipe Pose — это ИИ, который будет определять положение тела
  const pose = new Pose({
