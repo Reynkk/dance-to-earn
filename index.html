@@ -53,8 +53,11 @@
   <!-- Кнопка запуска танца -->
   <button onclick="startDance()">Начать танец</button>
 
-  <!-- Видео с фронтальной камеры (по умолчанию скрыто) -->
-  <video id="video" autoplay playsinline style="display: none;"></video>
+  <div id="video-container" style="position: relative; width: 640px; margin: 0 auto;">
+    <video id="video" autoplay playsinline style="display: none; border-radius: 10px; border: 2px solid #999;"></video>
+  </div>
+
+  <div id="message" style="font-size: 20px; margin-top: 20px; color: #333;"></div>
 
   <!-- Подключаем наш скрипт -->
   <script src="script.js"></script>
