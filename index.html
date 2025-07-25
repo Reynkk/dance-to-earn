@@ -1,21 +1,61 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dance-to-Earn</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dance to Earn</title>
+
+  <!-- Подключаем Telegram Web App API -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Подключаем библиотеки MediaPipe Pose и утилиту камеры -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+
+  <!-- Немного стилей, чтобы всё выглядело аккуратно -->
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background-color: #f0f0f0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #video {
+      margin-top: 20px;
+      max-width: 100%;
+      border: 2px solid #999;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
-  <h1>💃 Dance-to-Earn</h1>
-  <button id="startDance">Начать танец</button>
-  <video id="video" autoplay playsinline style="display:none;"></video>
-  <canvas id="output" width="640" height="480"></canvas>
 
-  <!-- MediaPipe Pose и camera utils -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <!-- Заголовок -->
+  <h1>Добро пожаловать в Dance to Earn 💃</h1>
+
+  <!-- Кнопка запуска танца -->
+  <button onclick="startDance()">Начать танец</button>
+
+  <!-- Видео с фронтальной камеры (по умолчанию скрыто) -->
+  <video id="video" autoplay playsinline style="display: none;"></video>
+
+  <!-- Подключаем наш скрипт -->
   <script src="script.js"></script>
 </body>
 </html>
+
