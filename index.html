@@ -10,7 +10,12 @@
 <body>
   <h1>💃 Dance-to-Earn</h1>
   <button id="startDance">Начать танец</button>
+  <video id="video" autoplay playsinline style="display:none;"></video>
+  <canvas id="output" width="640" height="480"></canvas>
 
+  <!-- MediaPipe Pose и camera utils -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
