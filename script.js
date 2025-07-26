@@ -2,29 +2,24 @@
 const tg = window.Telegram.WebApp;
 tg.expand(); // Расширяет приложение на весь экран
 
-// 2. Получаем элементы
+// 2. Элементы из DOM
 const videoElement = document.getElementById('video');
 const videoContainer = document.getElementById('video-container');
-const messageElement = document.getElementById('message');
+const instruction = document.getElementById('instruction');
 
-let danceStarted = false; // Для контроля запуска
-
-// 3. Основная функция
+// 3. Главная функция, запускается по нажатию кнопки
 async function startDance() {
-  messageElement.textContent = "Приготовьтесь. Поднимите правую руку для запуска танца.";
+  // 4. Показываем видео и инструкцию
+  videoElement.style.display = "block";
+  instruction.innerText = "🎵 Приготовьтесь... Поднимите правую руку для начала 🎵";
+  instruction.style.display = "block";
 
-  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-
-  videoElement.srcObject = stream;
-  videoElement.onloadedmetadata = async () => {
-    await videoElement.play();
-    videoElement.style.display = "block";
-  };
-
+  // 5. Создаём объект MediaPipe Pose
   const pose = new Pose({
     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
   });
 
+  // 6. Настройки для Pose
   pose.setOptions({
     modelComplexity: 1,
     smoothLandmarks: true,
@@ -33,18 +28,29 @@ async function startDance() {
     minTrackingConfidence: 0.5
   });
 
+  // 7. Обработка результатов распознавания
+  let danceStarted = false; // Флаг, чтобы не запускать повторно
+
   pose.onResults(results => {
-    if (!results.poseLandmarks) return;
+    if (results.poseLandmarks) {
+      const rightWrist = results.poseLandmarks[16]; // точка правой кисти
 
-    const rightWrist = results.poseLandmarks[16];
-    const rightShoulder = results.poseLandmarks[12];
+      if (!danceStarted && rightWrist.y < 0.5) {
+        danceStarted = true;
 
-    if (!danceStarted && rightWrist.y < rightShoulder.y) {
-      danceStarted = true;
-      onDanceStart();
+        // Убираем инструкцию
+        instruction.innerText = "🚀 Танец начался!";
+
+        // Уменьшаем видео и переносим в угол
+        videoContainer.classList.add("small");
+
+        // Можно тут начать анализ танца и начисление очков
+        console.log("Танец запущен по поднятой руке!");
+      }
     }
   });
 
+  // 8. Настраиваем камеру — она сама запросит разрешение
   const camera = new Camera(videoElement, {
     onFrame: async () => {
       await pose.send({ image: videoElement });
@@ -53,25 +59,6 @@ async function startDance() {
     height: 480
   });
 
-  camera.start();
+  camera.start(); // Запускаем
 }
 
-// 4. Функция запуска танца
-function onDanceStart() {
-  messageElement.textContent = ""; // Удаляем текст
-
-  // Перемещаем видео в угол
-  videoContainer.style.position = "absolute";
-  videoContainer.style.width = "160px";
-  videoContainer.style.height = "120px";
-  videoContainer.style.bottom = "20px";
-  videoContainer.style.right = "20px";
-  videoContainer.style.zIndex = "1000";
-  videoContainer.style.border = "2px solid #4CAF50";
-  videoContainer.style.borderRadius = "10px";
-
-  videoElement.style.width = "100%";
-  videoElement.style.height = "100%";
-
-  console.log("Танец начался! 🎉");
-}
