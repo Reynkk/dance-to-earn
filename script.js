@@ -61,7 +61,7 @@ function onDanceStart() {
   messageElement.textContent = ""; // Удаляем текст
 
   // Перемещаем видео в угол
-  videoContainer.style.position = "fixed";
+  videoContainer.style.position = "absolute";
   videoContainer.style.width = "160px";
   videoContainer.style.height = "120px";
   videoContainer.style.bottom = "20px";
