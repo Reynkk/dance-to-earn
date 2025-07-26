@@ -1,15 +1,74 @@
-body {
-  font-family: Arial, sans-serif;
+/* Общие стили */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  font-family: sans-serif;
+  background-color: #f0f0f0;
+  box-sizing: border-box;
   text-align: center;
-  background-color: #f0f8ff;
-  padding: 40px;
 }
 
+/* Заголовок */
+h1 {
+  color: #333;
+  margin-top: 20px;
+}
+
+/* Кнопка */
 button {
-  padding: 10px 20px;
+  padding: 12px 24px;
   font-size: 18px;
-  border-radius: 12px;
-  background-color: #0088cc;
+  background-color: #4CAF50;
   color: white;
   border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+/* Контейнер для видео */
+#video-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none; /* Чтобы клики проходили сквозь */
+  transition: all 0.8s ease;
+}
+
+/* Когда видео должно быть маленьким в углу */
+#video-container.small {
+  width: 160px;
+  height: 120px;
+  bottom: 10px;
+  right: 10px;
+  top: auto;
+  left: auto;
+  justify-content: flex-end;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+/* Сам элемент видео */
+#video {
+  width: 100%;
+  height: auto;
+  border: 2px solid #999;
+  border-radius: 10px;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Инструкция */
+#instruction {
+  font-size: 20px;
+  margin-top: 20px;
+  color: #444;
 }
