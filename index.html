@@ -5,31 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dance to Earn</title>
 
-  <!-- Telegram Web App API -->
+  <!-- Telegram WebApp API -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- MediaPipe Pose и Camera Utils -->
+  <!-- MediaPipe -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
 
-  <!-- Стили -->
   <style>
     body {
       font-family: sans-serif;
-      text-align: center;
-      background-color: #f0f0f0;
       margin: 0;
-      padding: 20px;
+      background: #111;
+      color: #fff;
+      text-align: center;
+      overflow: hidden;
     }
 
     h1 {
-      color: #333;
-      margin-bottom: 16px;
+      margin-top: 20px;
+      font-size: 28px;
     }
 
     button {
       padding: 12px 24px;
       font-size: 18px;
+      margin-top: 20px;
       background-color: #4CAF50;
       color: white;
       border: none;
@@ -39,50 +40,59 @@
 
     #instruction {
       margin-top: 20px;
-      font-size: 18px;
-      color: #444;
-      font-weight: bold;
+      font-size: 20px;
+      color: #ffcc00;
     }
 
-    #video-container {
-      position: relative;
-      width: 100%;
-      max-width: 640px;
-      margin: 20px auto;
-      transition: all 0.6s ease;
-    }
-
-    video {
-      width: 100%;
-      border: 2px solid #999;
+    #video {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      width: 150px;
+      height: 200px;
+      border: 2px solid #555;
       border-radius: 10px;
+      display: none;
+      z-index: 10;
     }
 
-    /* Класс, который делает видео маленьким и в правом нижнем углу */
-    .small {
-      position: fixed !important;
-      width: 160px !important;
+    #training-video {
+      width: 100%;
       height: auto;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1000;
+      max-height: 100vh;
+      display: none;
+    }
+
+    #score {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #222;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 18px;
+      z-index: 15;
     }
   </style>
 </head>
 <body>
 
   <h1>Добро пожаловать в Dance to Earn 💃</h1>
-  <button onclick="startDance()">Начать танец</button>
+  <button onclick="startDance()" id="startBtn">Начать танец</button>
+  <div id="instruction">Нажмите кнопку выше для начала</div>
 
-  <!-- Контейнер с видео -->
-  <div id="video-container" style="display: block;">
-    <video id="video" autoplay playsinline style="display: none;"></video>
-  </div>
+  <!-- Видео с камеры -->
+  <video id="video" autoplay playsinline muted></video>
 
-  <!-- Инструкция -->
-  <p id="instruction"></p>
+  <!-- Видео с тренировкой -->
+  <video id="training-video" src="training.mp4" controls></video>
 
-  <!-- Скрипт -->
+  <div id="score">Очки: 0</div>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
   <script src="script.js"></script>
 </body>
 </html>
