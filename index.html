@@ -2,97 +2,41 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dance to Earn</title>
-
-  <!-- Telegram WebApp API -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- MediaPipe -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
-
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      background: #111;
-      color: #fff;
-      text-align: center;
-      overflow: hidden;
-    }
-
-    h1 {
-      margin-top: 20px;
-      font-size: 28px;
-    }
-
-    button {
-      padding: 12px 24px;
-      font-size: 18px;
-      margin-top: 20px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    #instruction {
-      margin-top: 20px;
-      font-size: 20px;
-      color: #ffcc00;
-    }
-
-    #video {
-      position: fixed;
-      right: 10px;
-      bottom: 10px;
-      width: 150px;
-      height: 200px;
-      border: 2px solid #555;
-      border-radius: 10px;
-      display: none;
-      z-index: 10;
-    }
-
-    #training-video {
-      width: 100%;
-      height: auto;
-      max-height: 100vh;
-      display: none;
-    }
-
-    #score {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #222;
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 18px;
-      z-index: 15;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="container">
+    <h1>Dance to Earn</h1>
 
-  <h1>Добро пожаловать в Dance to Earn 💃</h1>
-  <button onclick="startDance()" id="startBtn">Начать танец</button>
-  <div id="instruction">Нажмите кнопку выше для начала</div>
+    <div id="controls">
+      <button id="startBtn">Начать тренировку</button>
+      <button id="uploadBtn">Загрузить видео</button>
+    </div>
 
-  <!-- Видео с камеры -->
-  <video id="video" autoplay playsinline muted></video>
+    <p id="statusText"></p>
 
-  <!-- Видео с тренировкой -->
-  <video id="training-video" src="training.mp4" controls></video>
+    <video id="userVideo" playsinline></video>
+    <video id="trainerVideo" playsinline muted></video>
 
-  <div id="score">Очки: 0</div>
+    <input type="file" id="fileInput" accept="video/*" style="display: none" />
+    <a id="downloadLink" style="display: none">Скачать JSON</a>
+  </div>
 
+  <!-- MediaPipe и camera_utils -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+
+  <!-- Telegram WebApp -->
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+  </script>
+
+  <!-- Основной скрипт -->
   <script src="script.js"></script>
 </body>
 </html>
 
-  <script src="script.js"></script>
-</body>
-</html>
