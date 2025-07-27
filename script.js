@@ -44,7 +44,7 @@ async function startTraining() {
     statusText.textContent = 'Поднимите правую руку для начала тренировки';
   };
 
-  pose = new Pose.Pose({
+  pose = new Pose({
     locateFile: (file) =>
       `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
   });
@@ -112,7 +112,7 @@ async function extractPoseFromVideo(videoUrl) {
   const ctx = canvas.getContext('2d');
   const json = [];
 
-  const pose = new Pose.Pose({
+  const pose = new Pose({
     locateFile: (file) =>
       `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
   });
