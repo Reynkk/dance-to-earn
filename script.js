@@ -192,3 +192,7 @@ async function processTrainingVideo(videoFile) {
       reject(new Error('Ошибка при загрузке видео'));
     };
 
+    // Запуск видео после установки обработчиков
+    video.play();
+  });
+}
