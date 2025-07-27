@@ -1,30 +1,52 @@
-const tg = window.Telegram.WebApp;
-tg.expand();
+const startBtn = document.getElementById('startBtn');
+const uploadBtn = document.getElementById('uploadBtn');
+const fileInput = document.getElementById('fileInput');
+const userVideo = document.getElementById('userVideo');
+const trainerVideo = document.getElementById('trainerVideo');
+const statusText = document.getElementById('statusText');
+const downloadLink = document.getElementById('downloadLink');
 
-const videoElement = document.getElementById("video");
-const trainingVideo = document.getElementById("training-video");
-const instructionText = document.getElementById("instruction");
-const scoreDisplay = document.getElementById("score");
-const startBtn = document.getElementById("startBtn");
+let pose;
+let userPoseData = [];
 
-let trainingPoseResults = null;
-let userScore = 0;
-let trainingStarted = false;
+startBtn.onclick = () => {
+  startTraining();
+};
 
-async function startDance() {
-  startBtn.style.display = "none";
-  instructionText.innerText = "Приготовьтесь... Поднимите правую руку для старта";
+uploadBtn.onclick = () => {
+  fileInput.click();
+};
 
-  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-  videoElement.srcObject = stream;
+fileInput.onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  videoElement.onloadedmetadata = () => {
-    videoElement.play();
-    videoElement.style.display = "block";
+  const url = URL.createObjectURL(file);
+  trainerVideo.src = url;
+  trainerVideo.style.display = 'block';
+  trainerVideo.play();
+
+  await extractPoseFromVideo(url);
+};
+
+async function startTraining() {
+  statusText.textContent = 'Подключение камеры...';
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'user' }
+  });
+  userVideo.srcObject = stream;
+
+  userVideo.onloadedmetadata = () => {
+    userVideo.play();
+    userVideo.classList.add('mini');
+    userVideo.style.display = 'block';
+    statusText.textContent = 'Поднимите правую руку для начала тренировки';
   };
 
-  const pose = new Pose({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
+  pose = new Pose.Pose({
+    locateFile: (file) =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
   });
 
   pose.setOptions({
@@ -35,91 +57,110 @@ async function startDance() {
     minTrackingConfidence: 0.5
   });
 
-  pose.onResults(async (results) => {
-    if (!trainingStarted) {
-      const rightWrist = results.poseLandmarks?.[16];
-      if (rightWrist && rightWrist.y < 0.5) {
-        trainingStarted = true;
-        instructionText.innerText = "";
-        startTraining();
-      }
-    } else {
-      const userPose = results.poseLandmarks;
-      const match = compareLandmarks(userPose, trainingPoseResults);
-      if (match > 20) {
-        userScore += 10;
-        scoreDisplay.innerText = `Очки: ${userScore}`;
-      }
-    }
-  });
+  pose.onResults(onPoseResult);
 
-  const camera = new Camera(videoElement, {
+  const camera = new Camera(userVideo, {
     onFrame: async () => {
-      await pose.send({ image: videoElement });
+      await pose.send({ image: userVideo });
     },
     width: 640,
     height: 480
   });
 
   camera.start();
-
-  // Обработка позы с тренировочного видео
-  const trainingPose = new Pose({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
-  });
-
-  trainingPose.setOptions({
-    modelComplexity: 1,
-    smoothLandmarks: true,
-    enableSegmentation: false,
-    minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.5
-  });
-
-  const tempCanvas = document.createElement("canvas");
-  const ctx = tempCanvas.getContext("2d");
-
-  trainingPose.onResults((results) => {
-    trainingPoseResults = results.poseLandmarks;
-  });
-
-  trainingVideo.addEventListener("play", () => {
-    tempCanvas.width = trainingVideo.videoWidth;
-    tempCanvas.height = trainingVideo.videoHeight;
-
-    function detectPoseFromVideo() {
-      if (!trainingVideo.paused && !trainingVideo.ended) {
-        ctx.drawImage(trainingVideo, 0, 0, tempCanvas.width, tempCanvas.height);
-        trainingPose.send({ image: tempCanvas });
-        requestAnimationFrame(detectPoseFromVideo);
-      } else {
-        // Тренировка завершена
-        instructionText.innerText = `Тренировка завершена! Вы набрали ${userScore} очков 🎉`;
-        trainingVideo.style.display = "none";
-        videoElement.style.display = "none";
-      }
-    }
-
-    detectPoseFromVideo();
-  });
 }
 
-function startTraining() {
-  trainingVideo.currentTime = 0;
-  trainingVideo.play();
-  trainingVideo.style.display = "block";
-}
+let danceStarted = false;
 
-function compareLandmarks(user, ref) {
-  if (!user || !ref) return 0;
-  let matched = 0;
-  for (let i = 0; i < user.length; i++) {
-    const dx = user[i].x - ref[i].x;
-    const dy = user[i].y - ref[i].y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 0.1) matched++;
+function onPoseResult(results) {
+  if (!results.poseLandmarks) return;
+
+  const rightWrist = results.poseLandmarks[16];
+  userPoseData.push({
+    frame: Date.now(),
+    landmarks: results.poseLandmarks.map((lm) => ({
+      x: lm.x,
+      y: lm.y,
+      z: lm.z,
+      visibility: lm.visibility
+    }))
+  });
+
+  if (!danceStarted && rightWrist.y < 0.5) {
+    danceStarted = true;
+    statusText.textContent = 'Тренировка началась!';
+    playTrainerVideo();
   }
-  return matched;
+}
+
+function playTrainerVideo() {
+  trainerVideo.src = 'https://streamable.com/yaaax1'; // замените на прямую ссылку .mp4
+  trainerVideo.style.display = 'block';
+  trainerVideo.play();
+}
+
+async function extractPoseFromVideo(videoUrl) {
+  statusText.textContent = 'Извлечение поз...';
+
+  const video = document.createElement('video');
+  video.src = videoUrl;
+  video.crossOrigin = 'anonymous';
+  video.muted = true;
+  await video.play();
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const json = [];
+
+  const pose = new Pose.Pose({
+    locateFile: (file) =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
+  });
+
+  pose.setOptions({
+    staticImageMode: true,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.5
+  });
+
+  await new Promise((resolve) => {
+    video.onended = resolve;
+    video.ontimeupdate = async () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      const results = await pose.send({ image: canvas });
+
+      if (results.poseLandmarks) {
+        json.push({
+          frame: Math.floor(video.currentTime * 1000),
+          landmarks: results.poseLandmarks.map((lm) => ({
+            x: lm.x,
+            y: lm.y,
+            z: lm.z,
+            visibility: lm.visibility
+          }))
+        });
+      }
+
+      video.currentTime += 0.2; // ~5 кадров в секунду
+    };
+  });
+
+  const blob = new Blob([JSON.stringify(json, null, 2)], {
+    type: 'application/json'
+  });
+
+  const url = URL.createObjectURL(blob);
+  downloadLink.href = url;
+  downloadLink.download = 'trainer_pose_data.json';
+  downloadLink.textContent = 'Скачать JSON';
+  downloadLink.style.display = 'inline-block';
+  statusText.textContent = 'Готово!';
+
+  pose.close();
+}
+
 }
 
 
