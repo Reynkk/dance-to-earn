@@ -161,6 +161,6 @@ async function extractPoseFromVideo(videoUrl) {
   pose.close();
 }
 
-}
+
 
 
