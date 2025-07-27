@@ -1,140 +1,177 @@
-const startBtn = document.getElementById('startBtn');
-const uploadBtn = document.getElementById('uploadBtn');
-const fileInput = document.getElementById('fileInput');
-const userVideo = document.getElementById('userVideo');
+const startTrainingBtn = document.getElementById('startTrainingBtn');
+const uploadVideoBtn = document.getElementById('uploadVideoBtn');
+const uploadVideoInput = document.getElementById('uploadVideoInput');
+const videoElement = document.getElementById('video');
 const trainerVideo = document.getElementById('trainerVideo');
-const statusText = document.getElementById('statusText');
-const downloadLink = document.getElementById('downloadLink');
+const messageEl = document.getElementById('message');
+const overlayCanvas = document.getElementById('overlay');
+const overlayCtx = overlayCanvas.getContext('2d');
 
-let pose;
-let userPoseData = [];
+let camera = null;
+let pose = null;
 
-startBtn.onclick = () => {
-  startTraining();
+// Utility: Скачивание JSON-файла
+function downloadJSON(content, fileName) {
+  const a = document.createElement('a');
+  const file = new Blob([content], { type: 'application/json' });
+  a.href = URL.createObjectURL(file);
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// --- ЗАПУСК ТРЕНИРОВКИ С КАМЕРОЙ ---
+startTrainingBtn.onclick = async () => {
+  messageEl.textContent = "Приготовьтесь. Поднимите правую руку для запуска танца.";
+  trainerVideo.style.display = 'none';
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+    videoElement.srcObject = stream;
+    await videoElement.play();
+    videoElement.style.display = "block";
+
+    // Настроим MediaPipe Pose
+    pose = new Pose({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
+    });
+    pose.setOptions({
+      modelComplexity: 1,
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+
+    let danceStarted = false;
+
+    pose.onResults(results => {
+      overlayCanvas.width = videoElement.videoWidth;
+      overlayCanvas.height = videoElement.videoHeight;
+      overlayCanvas.style.width = videoElement.style.width;
+      overlayCanvas.style.height = videoElement.style.height;
+
+      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+      if (results.poseLandmarks) {
+        // Отобразим ключевые точки (опционально)
+        for (const lm of results.poseLandmarks) {
+          overlayCtx.beginPath();
+          overlayCtx.arc(lm.x * overlayCanvas.width, lm.y * overlayCanvas.height, 5, 0, 2 * Math.PI);
+          overlayCtx.fillStyle = 'red';
+          overlayCtx.fill();
+        }
+
+        if (!danceStarted) {
+          const rightWrist = results.poseLandmarks[16];
+          if (rightWrist && rightWrist.y < 0.5) {
+            danceStarted = true;
+            messageEl.textContent = "Танец начался!";
+            moveCameraToCorner();
+            startDanceSession();
+          }
+        }
+      }
+    });
+
+    camera = new Camera(videoElement, {
+      onFrame: async () => {
+        await pose.send({ image: videoElement });
+      },
+      width: 640,
+      height: 480
+    });
+    camera.start();
+
+  } catch (e) {
+    messageEl.textContent = "Ошибка доступа к камере: " + e.message;
+  }
 };
 
-uploadBtn.onclick = () => {
-  fileInput.click();
+function moveCameraToCorner() {
+  videoElement.style.position = 'fixed';
+  videoElement.style.width = '160px';
+  videoElement.style.height = '120px';
+  videoElement.style.bottom = '10px';
+  videoElement.style.right = '10px';
+  videoElement.style.zIndex = '10';
+}
+
+function startDanceSession() {
+  // Тут можно добавить логику игры: воспроизведение тренировочного видео,
+  // подсчет очков и т.д.
+  // Пока просто сообщение, что начался танец.
+  // TODO: реализовать логику с тренировочным видео и подсчетом очков
+}
+
+// --- ЗАГРУЗКА ВИДЕО И ИЗВЛЕЧЕНИЕ ПОЗ ---
+
+uploadVideoBtn.onclick = () => {
+  uploadVideoInput.click();
 };
 
-fileInput.onchange = async (e) => {
+uploadVideoInput.onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
+  messageEl.textContent = "Обрабатываем видео, подождите...";
 
-  const url = URL.createObjectURL(file);
-  trainerVideo.src = url;
-  trainerVideo.style.display = 'block';
-  trainerVideo.play();
-
-  await extractPoseFromVideo(url);
+  try {
+    const poseData = await processTrainingVideo(file);
+    const jsonStr = JSON.stringify(poseData, null, 2);
+    downloadJSON(jsonStr, 'trainer_pose_data.json');
+    messageEl.textContent = "Готово! JSON файл для тренировки сгенерирован и загружен.";
+  } catch (err) {
+    messageEl.textContent = "Ошибка при обработке видео: " + err.message;
+  }
 };
 
-async function startTraining() {
-  statusText.textContent = 'Подключение камеры...';
+// Функция для обработки видео и извлечения поз
+async function processTrainingVideo(videoFile) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(videoFile);
+    video.crossOrigin = "anonymous";
+    video.muted = true;
+    video.playsInline = true;
 
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'user' }
-  });
-  userVideo.srcObject = stream;
+    video.onloadedmetadata = () => {
+      video.pause();
+      video.currentTime = 0;
+    };
 
-  userVideo.onloadedmetadata = () => {
-    userVideo.play();
-    userVideo.classList.add('mini');
-    userVideo.style.display = 'block';
-    statusText.textContent = 'Поднимите правую руку для начала тренировки';
-  };
+    // Canvas для отрисовки видео кадров
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
 
-  pose = new Pose({
-    locateFile: (file) =>
-      `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
-  });
+    const json = [];
+    let latestResults = null;
 
-  pose.setOptions({
-    modelComplexity: 1,
-    smoothLandmarks: true,
-    enableSegmentation: false,
-    minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.5
-  });
+    pose = new Pose({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
+    });
 
-  pose.onResults(onPoseResult);
+    pose.setOptions({
+      modelComplexity: 1,
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
 
-  const camera = new Camera(userVideo, {
-    onFrame: async () => {
-      await pose.send({ image: userVideo });
-    },
-    width: 640,
-    height: 480
-  });
+    pose.onResults(results => {
+      latestResults = results;
+    });
 
-  camera.start();
-}
-
-let danceStarted = false;
-
-function onPoseResult(results) {
-  if (!results.poseLandmarks) return;
-
-  const rightWrist = results.poseLandmarks[16];
-  userPoseData.push({
-    frame: Date.now(),
-    landmarks: results.poseLandmarks.map((lm) => ({
-      x: lm.x,
-      y: lm.y,
-      z: lm.z,
-      visibility: lm.visibility
-    }))
-  });
-
-  if (!danceStarted && rightWrist.y < 0.5) {
-    danceStarted = true;
-    statusText.textContent = 'Тренировка началась!';
-    playTrainerVideo();
-  }
-}
-
-function playTrainerVideo() {
-  trainerVideo.src = 'https://streamable.com/yaaax1'; // замените на прямую ссылку .mp4
-  trainerVideo.style.display = 'block';
-  trainerVideo.play();
-}
-
-async function extractPoseFromVideo(videoUrl) {
-  statusText.textContent = 'Извлечение поз...';
-
-  const video = document.createElement('video');
-  video.src = videoUrl;
-  video.crossOrigin = 'anonymous';
-  video.muted = true;
-  await video.play();
-
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const json = [];
-
-  const pose = new Pose({
-    locateFile: (file) =>
-      `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
-  });
-
-  pose.setOptions({
-    staticImageMode: true,
-    modelComplexity: 1,
-    minDetectionConfidence: 0.5
-  });
-
-  await new Promise((resolve) => {
-    video.onended = resolve;
     video.ontimeupdate = async () => {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0);
-      const results = await pose.send({ image: canvas });
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      await pose.send({ image: canvas });
 
-      if (results.poseLandmarks) {
+      if (latestResults && latestResults.poseLandmarks) {
         json.push({
           frame: Math.floor(video.currentTime * 1000),
-          landmarks: results.poseLandmarks.map((lm) => ({
+          landmarks: latestResults.poseLandmarks.map(lm => ({
             x: lm.x,
             y: lm.y,
             z: lm.z,
@@ -142,25 +179,16 @@ async function extractPoseFromVideo(videoUrl) {
           }))
         });
       }
-
       video.currentTime += 0.2; // ~5 кадров в секунду
     };
-  });
 
-  const blob = new Blob([JSON.stringify(json, null, 2)], {
-    type: 'application/json'
-  });
+    video.onended = () => {
+      pose.close();
+      URL.revokeObjectURL(video.src);
+      resolve(json);
+    };
 
-  const url = URL.createObjectURL(blob);
-  downloadLink.href = url;
-  downloadLink.download = 'trainer_pose_data.json';
-  downloadLink.textContent = 'Скачать JSON';
-  downloadLink.style.display = 'inline-block';
-  statusText.textContent = 'Готово!';
-
-  pose.close();
-}
-
-
-
+    video.onerror = (e) => {
+      reject(new Error('Ошибка при загрузке видео'));
+    };
 
