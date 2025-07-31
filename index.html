@@ -19,7 +19,15 @@
 
   <div id="message"></div>
 
-  <video id="video" playsinline style="display:none" muted></video>
+  <div id="calibrationOverlay" style="display: none;">
+    <p id="calibrationMessage">Пожалуйста, пройдите калибровку</p>
+    <ul>
+      <li id="step1">▫ 1. Вы должны быть полностью в кадре</li>
+      <li id="step2">▫ 2. Поднимите обе руки</li>
+    </ul>
+  </div>
+
+  <video id="video" playsinline muted></video>
   <video id="trainerVideo" playsinline controls style="display:none; width: 100%; height: auto;"></video>
 
   <canvas id="overlay" style="position:absolute; left:0; top:0; pointer-events:none;"></canvas>
