@@ -24,14 +24,9 @@ function downloadJSON(content, fileName) {
 startTrainingBtn.onclick = async () => {
   messageEl.textContent = "Приготовьтесь. Поднимите правую руку для запуска танца.";
   trainerVideo.style.display = 'none';
+  videoElement.style.display = "block";
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-    videoElement.srcObject = stream;
-    await videoElement.play();
-    videoElement.style.display = "block";
-
-    // Настроим MediaPipe Pose
     pose = new Pose({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
     });
@@ -54,7 +49,6 @@ startTrainingBtn.onclick = async () => {
       overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
       if (results.poseLandmarks) {
-        // Отобразим ключевые точки (опционально)
         for (const lm of results.poseLandmarks) {
           overlayCtx.beginPath();
           overlayCtx.arc(lm.x * overlayCanvas.width, lm.y * overlayCanvas.height, 5, 0, 2 * Math.PI);
@@ -81,6 +75,7 @@ startTrainingBtn.onclick = async () => {
       width: 640,
       height: 480
     });
+
     camera.start();
 
   } catch (e) {
@@ -100,12 +95,9 @@ function moveCameraToCorner() {
 function startDanceSession() {
   // Тут можно добавить логику игры: воспроизведение тренировочного видео,
   // подсчет очков и т.д.
-  // Пока просто сообщение, что начался танец.
-  // TODO: реализовать логику с тренировочным видео и подсчетом очков
 }
 
 // --- ЗАГРУЗКА ВИДЕО И ИЗВЛЕЧЕНИЕ ПОЗ ---
-
 uploadVideoBtn.onclick = () => {
   uploadVideoInput.click();
 };
@@ -125,7 +117,7 @@ uploadVideoInput.onchange = async (e) => {
   }
 };
 
-// Функция для обработки видео и извлечения поз
+// Обработка тренировочного видео и извлечение поз
 async function processTrainingVideo(videoFile) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
@@ -139,7 +131,6 @@ async function processTrainingVideo(videoFile) {
       video.currentTime = 0;
     };
 
-    // Canvas для отрисовки видео кадров
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -179,7 +170,8 @@ async function processTrainingVideo(videoFile) {
           }))
         });
       }
-      video.currentTime += 0.2; // ~5 кадров в секунду
+
+      video.currentTime += 0.2;
     };
 
     video.onended = () => {
@@ -188,11 +180,11 @@ async function processTrainingVideo(videoFile) {
       resolve(json);
     };
 
-    video.onerror = (e) => {
-      reject(new Error('Ошибка при загрузке видео'));
-    };
+    video.onerror = () => reject(new Error('Ошибка при загрузке видео'));
 
-    // Запуск видео после установки обработчиков
-    video.play();
+    video.play().then(() => {
+      // Триггерим первый кадр
+      video.currentTime = 0.01;
+    });
   });
 }
