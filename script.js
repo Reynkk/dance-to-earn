@@ -1,4 +1,5 @@
 // JS-файл: script.js
+window.addEventListener('DOMContentLoaded', () => {
 const startTrainingBtn = document.getElementById('startTrainingBtn');
 const uploadVideoBtn = document.getElementById('uploadVideoBtn');
 const uploadVideoInput = document.getElementById('uploadVideoInput');
@@ -190,3 +191,4 @@ async function processTrainingVideo(videoFile) {
     video.onerror = () => reject(new Error('Ошибка загрузки видео'));
   });
 }
+});
