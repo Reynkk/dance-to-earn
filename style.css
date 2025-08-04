@@ -13,6 +13,8 @@ h1 {
 
 #buttons {
   margin: 20px;
+  position: relative;
+  z-index: 10;
 }
 
 button {
@@ -73,5 +75,6 @@ button:hover {
   z-index: 5;
   text-align: left;
 }
+
 
 
