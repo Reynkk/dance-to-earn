@@ -1,4 +1,3 @@
-// JS-файл: script.js
 window.addEventListener('DOMContentLoaded', () => {
   const startTrainingBtn = document.getElementById('startTrainingBtn');
   const uploadVideoBtn = document.getElementById('uploadVideoBtn');
@@ -9,7 +8,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const overlayCanvas = document.getElementById('overlay');
   const overlayCtx = overlayCanvas.getContext('2d');
   let camera = null;
-  let cameraPose = null;
+  let pose = null;
 
   function downloadJSON(content, fileName) {
     const a = document.createElement('a');
@@ -20,41 +19,33 @@ window.addEventListener('DOMContentLoaded', () => {
     URL.revokeObjectURL(a.href);
   }
 
-  function createPose(onResultsCallback) {
-    const p = new Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
-    });
-    p.setOptions({
-      modelComplexity: 1,
-      smoothLandmarks: true,
-      enableSegmentation: false,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
-    });
-    p.onResults(onResultsCallback);
-    return p;
-  }
-
   startTrainingBtn.onclick = async () => {
+    document.getElementById("buttons").style.display = "none";
     document.getElementById("calibrationOverlay").style.display = "block";
     document.getElementById("calibrationMessage").textContent = "Пожалуйста, пройдите калибровку";
-    messageEl.textContent = "";
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-      videoElement.srcObject = stream;
-      await videoElement.play();
-      videoElement.style.display = "block";
+      pose = new Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
+      });
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
 
       let step1Completed = false;
       let step2Completed = false;
 
-      cameraPose = createPose(results => {
+      pose.onResults(results => {
         overlayCanvas.width = videoElement.videoWidth;
         overlayCanvas.height = videoElement.videoHeight;
         overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
         if (results.poseLandmarks) {
+          // Рисуем точки
           for (const lm of results.poseLandmarks) {
             overlayCtx.beginPath();
             overlayCtx.arc(lm.x * overlayCanvas.width, lm.y * overlayCanvas.height, 5, 0, 2 * Math.PI);
@@ -65,15 +56,29 @@ window.addEventListener('DOMContentLoaded', () => {
           const nose = results.poseLandmarks[0];
           const leftAnkle = results.poseLandmarks[27];
           const rightAnkle = results.poseLandmarks[28];
-          const leftWrist = results.poseLandmarks[15];
-          const rightWrist = results.poseLandmarks[16];
 
-          if (!step1Completed && nose && leftAnkle && rightAnkle && leftAnkle.y < 1 && rightAnkle.y < 1) {
+          const inFrame = (
+            nose.visibility > 0.5 &&
+            leftAnkle.visibility > 0.5 &&
+            rightAnkle.visibility > 0.5 &&
+            leftAnkle.y < 1 &&
+            rightAnkle.y < 1 &&
+            nose.y > 0
+          );
+
+          if (!step1Completed && inFrame) {
             step1Completed = true;
             document.getElementById("step1").textContent = "✅ 1. Вы полностью в кадре";
           }
 
-          if (step1Completed && leftWrist.y < nose.y && rightWrist.y < nose.y && !step2Completed) {
+          const leftWrist = results.poseLandmarks[15];
+          const rightWrist = results.poseLandmarks[16];
+
+          if (step1Completed && !step2Completed &&
+              leftWrist.visibility > 0.5 &&
+              rightWrist.visibility > 0.5 &&
+              leftWrist.y < nose.y &&
+              rightWrist.y < nose.y) {
             step2Completed = true;
             document.getElementById("step2").textContent = "✅ 2. Руки подняты";
             document.getElementById("calibrationMessage").textContent = "🎉 Калибровка завершена. Начинаем тренировку!";
@@ -89,31 +94,26 @@ window.addEventListener('DOMContentLoaded', () => {
 
       camera = new Camera(videoElement, {
         onFrame: async () => {
-          await cameraPose.send({ image: videoElement });
+          await pose.send({ image: videoElement });
         },
         width: 480,
         height: 640
       });
+
       camera.start();
 
     } catch (e) {
-      messageEl.textContent = "Ошибка доступа к камере: " + e.message;
+      messageEl.textContent = "Ошибка запуска камеры: " + e.message;
     }
   };
 
   function transitionToCornerVideo() {
-    videoElement.style.transition = "all 0.5s ease";
-    videoElement.style.position = "fixed";
-    videoElement.style.width = "160px";
-    videoElement.style.height = "120px";
-    videoElement.style.bottom = "10px";
-    videoElement.style.right = "10px";
-    videoElement.style.zIndex = "10";
-    videoElement.style.objectFit = "cover";
+    videoElement.classList.add('small-video');
   }
 
   function startDanceSession() {
     console.log("Тренировка началась!");
+    // Здесь можно подключить логику воспроизведения тренировочного видео
   }
 
   uploadVideoBtn.onclick = () => {
@@ -123,14 +123,7 @@ window.addEventListener('DOMContentLoaded', () => {
   uploadVideoInput.onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     messageEl.textContent = "Обрабатываем видео...";
-
-    // Остановить камеру, если активна
-    if (camera) {
-      camera.stop();
-      camera = null;
-    }
 
     try {
       const poseData = await processTrainingVideo(file);
@@ -150,38 +143,52 @@ window.addEventListener('DOMContentLoaded', () => {
       video.muted = true;
       video.playsInline = true;
 
+      video.onloadedmetadata = () => {
+        video.pause();
+        video.currentTime = 0;
+      };
+
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const json = [];
 
-      const processingPose = createPose(results => {
-        if (results.poseLandmarks) {
+      const json = [];
+      let latestResults = null;
+
+      pose = new Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
+      });
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+
+      pose.onResults(results => {
+        latestResults = results;
+      });
+
+      video.ontimeupdate = async () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        await pose.send({ image: canvas });
+
+        if (latestResults && latestResults.poseLandmarks) {
           json.push({
-            frame: Math.floor(currentFrameTime * 1000),
-            landmarks: results.poseLandmarks.map(lm => ({
+            frame: Math.floor(video.currentTime * 1000),
+            landmarks: latestResults.poseLandmarks.map(lm => ({
               x: lm.x, y: lm.y, z: lm.z, visibility: lm.visibility
             }))
           });
         }
-      });
 
-      let currentFrameTime = 0;
-      const step = 0.2;
+        video.currentTime += 0.2;
+      };
 
-      video.onloadedmetadata = async () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const duration = video.duration;
-
-        while (currentFrameTime < duration) {
-          video.currentTime = currentFrameTime;
-          await new Promise(r => video.onseeked = r);
-          ctx.drawImage(video, 0, 0);
-          await processingPose.send({ image: canvas });
-          currentFrameTime += step;
-        }
-
-        processingPose.close();
+      video.onended = () => {
+        pose.close();
         URL.revokeObjectURL(video.src);
         resolve(json);
       };
@@ -190,4 +197,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+
+
 
