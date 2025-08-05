@@ -44,8 +44,8 @@ window.addEventListener('DOMContentLoaded', () => {
       let step2Completed = false;
 
       pose.onResults(async results => {
-        overlayCanvas.width = videoElement.videoWidth;
-        overlayCanvas.height = videoElement.videoHeight;
+        overlayCanvas.width = 160;
+        overlayCanvas.height = 120;
         overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
         if (results.poseLandmarks) {
@@ -253,6 +253,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
 
 
 
