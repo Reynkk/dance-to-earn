@@ -5,6 +5,7 @@ body {
   text-align: center;
   background: #111;
   color: #fff;
+  overflow: hidden;
 }
 
 h1 {
@@ -33,6 +34,7 @@ button:hover {
   cursor: pointer;
 }
 
+/* Камера пользователя – во весь экран до калибровки */
 #video {
   position: fixed;
   top: 0;
@@ -44,12 +46,13 @@ button:hover {
   transition: all 0.5s ease;
 }
 
+/* После калибровки – в правый нижний угол */
 .small-video {
   width: 160px;
   height: 120px;
+  position: fixed;
   bottom: 10px;
   right: 10px;
-  position: fixed;
   object-fit: cover;
   z-index: 10;
   transition: all 0.5s ease;
@@ -75,44 +78,52 @@ button:hover {
 }
 
 #trainerVideo {
-  position: relative;
-  z-index: 5;
-  width: 100vw;
-  height: auto;
-}
-
-.center-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 20;
+  object-fit: cover;
+  z-index: 3;
+}
+
+/* Новый адаптивный и центрированный стиль для обратного отсчета */
+#countdownOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.85);
+  color: white;
+  font-size: 8vw;
+  font-weight: bold;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 5em;
-  font-weight: bold;
-  color: white;
-  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  user-select: none;
+  text-align: center;
+  padding: 0 10px;
+  box-sizing: border-box;
   display: none;
 }
 
+/* Счётчик очков */
 #scoreOverlay {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: black;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
   color: white;
-  font-size: 36px;
+  font-size: 24px;
   font-weight: bold;
-  align-items: center;
-  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 8px;
   z-index: 100;
 }
+
 
 
 
