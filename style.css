@@ -4,8 +4,14 @@ body {
   padding: 0;
   background: #111;
   color: #fff;
-  text-align: center;
   overflow: hidden;
+  position: relative;
+}
+
+h1 {
+  margin-top: 20px;
+  z-index: 5;
+  position: relative;
 }
 
 #buttons {
@@ -30,7 +36,8 @@ button:hover {
   cursor: pointer;
 }
 
-#trainerVideo {
+/* КАМЕРА: до калибровки — полноэкранная */
+#video {
   position: fixed;
   top: 0;
   left: 0;
@@ -38,63 +45,91 @@ button:hover {
   height: 100vh;
   object-fit: cover;
   z-index: 1;
+  transition: all 0.5s ease;
 }
 
-#video.small-video {
+/* ПОСЛЕ калибровки — в угол */
+.small-video {
+  width: 160px;
+  height: 120px;
   position: fixed;
-  width: 200px;
-  height: 150px;
-  bottom: 20px;
-  right: 20px;
-  z-index: 2;
+  bottom: 10px;
+  right: 10px;
   object-fit: cover;
-  border: 2px solid #fff;
-  border-radius: 8px;
+  z-index: 5;
+  transition: all 0.5s ease;
 }
 
+/* Canvas должен быть такого же размера как видео пользователя */
 #overlay {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 200px;
-  height: 150px;
-  z-index: 3;
+  bottom: 10px;
+  right: 10px;
+  width: 160px;
+  height: 120px;
   pointer-events: none;
+  z-index: 6;
 }
 
-.center-overlay {
+/* Калибровочный блок */
+.overlay-box {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 10;
+  text-align: left;
+}
+
+/* Тренер — на весь экран */
+#trainerVideo {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 20;
+  object-fit: cover;
+  z-index: 2;
+}
+
+/* Отсчёт — по центру, поверх всего */
+#countdownOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.85);
+  color: white;
+  font-size: 8vw;
+  font-weight: bold;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 5em;
-  font-weight: bold;
-  color: white;
-  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  user-select: none;
+  text-align: center;
+  padding: 0 10px;
+  box-sizing: border-box;
   display: none;
 }
 
+/* Счёт */
 #scoreOverlay {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: black;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
   color: white;
-  font-size: 36px;
+  font-size: 24px;
   font-weight: bold;
-  align-items: center;
-  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 8px;
   z-index: 100;
 }
-
 
 
 
