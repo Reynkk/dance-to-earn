@@ -50,10 +50,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
         if (results.poseLandmarks) {
           for (const lm of results.poseLandmarks) {
-            overlayCtx.beginPath();
-            overlayCtx.arc(lm.x * overlayCanvas.width, lm.y * overlayCanvas.height, 5, 0, 2 * Math.PI);
-            overlayCtx.fillStyle = 'red';
-            overlayCtx.fill();
+             overlayCtx.beginPath();
+             overlayCtx.arc(lm.x * 160, lm.y * 120, 4, 0, 2 * Math.PI);
+             overlayCtx.fillStyle = 'red';
+             overlayCtx.fill();
           }
 
           const landmarks = results.poseLandmarks;
@@ -253,6 +253,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
 
 
 
