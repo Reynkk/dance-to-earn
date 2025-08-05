@@ -13,6 +13,8 @@ h1 {
 
 #buttons {
   margin: 20px;
+  position: relative;
+  z-index: 10;
 }
 
 button {
@@ -111,6 +113,7 @@ button:hover {
   justify-content: center;
   z-index: 100;
 }
+
 
 
 
