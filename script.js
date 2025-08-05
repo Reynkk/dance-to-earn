@@ -7,24 +7,23 @@ window.addEventListener('DOMContentLoaded', () => {
   const messageEl = document.getElementById('message');
   const overlayCanvas = document.getElementById('overlay');
   const overlayCtx = overlayCanvas.getContext('2d');
-  let camera = null;
-  let pose = null;
 
-  function downloadJSON(content, fileName) {
-    const a = document.createElement('a');
-    const file = new Blob([content], { type: 'application/json' });
-    a.href = URL.createObjectURL(file);
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
+  const calibrationMessage = document.getElementById("calibrationMessage");
+  const step1El = document.getElementById("step1");
+  const step2El = document.getElementById("step2");
+
+  let pose = null;
+  let camera = null;
 
   startTrainingBtn.onclick = async () => {
-    document.getElementById("buttons").style.display = "none";
     document.getElementById("calibrationOverlay").style.display = "block";
-    document.getElementById("calibrationMessage").textContent = "Пожалуйста, пройдите калибровку";
+    calibrationMessage.textContent = "Пожалуйста, пройдите калибровку";
 
     try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      videoElement.srcObject = stream;
+      await videoElement.play();
+
       pose = new Pose({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
       });
@@ -36,8 +35,8 @@ window.addEventListener('DOMContentLoaded', () => {
         minTrackingConfidence: 0.5
       });
 
-      let step1Completed = false;
-      let step2Completed = false;
+      let step1 = false;
+      let step2 = false;
 
       pose.onResults(results => {
         overlayCanvas.width = videoElement.videoWidth;
@@ -45,7 +44,6 @@ window.addEventListener('DOMContentLoaded', () => {
         overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
         if (results.poseLandmarks) {
-          // Рисуем точки
           for (const lm of results.poseLandmarks) {
             overlayCtx.beginPath();
             overlayCtx.arc(lm.x * overlayCanvas.width, lm.y * overlayCanvas.height, 5, 0, 2 * Math.PI);
@@ -56,148 +54,95 @@ window.addEventListener('DOMContentLoaded', () => {
           const nose = results.poseLandmarks[0];
           const leftAnkle = results.poseLandmarks[27];
           const rightAnkle = results.poseLandmarks[28];
-
-          const inFrame = (
-            nose.visibility > 0.5 &&
-            leftAnkle.visibility > 0.5 &&
-            rightAnkle.visibility > 0.5 &&
-            leftAnkle.y < 1 &&
-            rightAnkle.y < 1 &&
-            nose.y > 0
-          );
-
-          if (!step1Completed && inFrame) {
-            step1Completed = true;
-            document.getElementById("step1").textContent = "✅ 1. Вы полностью в кадре";
-          }
-
           const leftWrist = results.poseLandmarks[15];
           const rightWrist = results.poseLandmarks[16];
 
-          if (step1Completed && !step2Completed &&
-              leftWrist.visibility > 0.5 &&
-              rightWrist.visibility > 0.5 &&
-              leftWrist.y < nose.y &&
-              rightWrist.y < nose.y) {
-            step2Completed = true;
-            document.getElementById("step2").textContent = "✅ 2. Руки подняты";
-            document.getElementById("calibrationMessage").textContent = "🎉 Калибровка завершена. Начинаем тренировку!";
+          if (!step1 && leftAnkle && rightAnkle && leftAnkle.y < 1 && rightAnkle.y < 1) {
+            step1 = true;
+            step1El.textContent = "✅ 1. Вы полностью в кадре";
+          }
+
+          if (step1 && leftWrist.y < nose.y && rightWrist.y < nose.y && !step2) {
+            step2 = true;
+            step2El.textContent = "✅ 2. Руки подняты";
+            calibrationMessage.textContent = "🎉 Калибровка завершена!";
 
             setTimeout(() => {
               document.getElementById("calibrationOverlay").style.display = "none";
               transitionToCornerVideo();
               startDanceSession();
-            }, 2000);
+            }, 1500);
           }
         }
       });
 
       camera = new Camera(videoElement, {
-        onFrame: async () => {
-          await pose.send({ image: videoElement });
-        },
+        onFrame: async () => await pose.send({ image: videoElement }),
         width: 480,
         height: 640
       });
 
       camera.start();
-
     } catch (e) {
-      messageEl.textContent = "Ошибка запуска камеры: " + e.message;
+      messageEl.textContent = "Ошибка доступа к камере: " + e.message;
     }
   };
 
   function transitionToCornerVideo() {
     videoElement.classList.add('small-video');
+    document.getElementById('buttons').classList.add('hidden');
+  }
+
+  function showCountdown(callback) {
+    const countdownEl = document.getElementById("countdownOverlay");
+    const steps = ["Приготовьтесь", "3", "2", "1"];
+    let index = 0;
+
+    countdownEl.style.display = "flex";
+    countdownEl.textContent = steps[index];
+
+    const interval = setInterval(() => {
+      index++;
+      if (index >= steps.length) {
+        clearInterval(interval);
+        countdownEl.style.display = "none";
+        callback();
+      } else {
+        countdownEl.textContent = steps[index];
+      }
+    }, 1000);
   }
 
   function startDanceSession() {
-    console.log("Тренировка началась!");
-    // Здесь можно подключить логику воспроизведения тренировочного видео
-  }
+    showCountdown(() => {
+      trainerVideo.src = "trainer.mp4"; // путь к видео
+      trainerVideo.style.display = "block";
+      trainerVideo.play();
 
-  uploadVideoBtn.onclick = () => {
-    uploadVideoInput.click();
-  };
+      let score = 0;
+      const scoreValue = document.getElementById("scoreValue");
+      const scoreInterval = setInterval(() => {
+        score += Math.floor(Math.random() * 5); // заглушка
+        scoreValue.textContent = score;
+      }, 600);
 
-  uploadVideoInput.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    messageEl.textContent = "Обрабатываем видео...";
-
-    try {
-      const poseData = await processTrainingVideo(file);
-      const jsonStr = JSON.stringify(poseData, null, 2);
-      downloadJSON(jsonStr, 'trainer_pose_data.json');
-      messageEl.textContent = "Готово! JSON файл с позами сохранен.";
-    } catch (err) {
-      messageEl.textContent = "Ошибка обработки: " + err.message;
-    }
-  };
-
-  async function processTrainingVideo(videoFile) {
-    return new Promise((resolve, reject) => {
-      const video = document.createElement('video');
-      video.src = URL.createObjectURL(videoFile);
-      video.crossOrigin = "anonymous";
-      video.muted = true;
-      video.playsInline = true;
-
-      video.onloadedmetadata = () => {
-        video.pause();
-        video.currentTime = 0;
+      trainerVideo.onended = () => {
+        clearInterval(scoreInterval);
+        videoElement.style.display = "none";
+        trainerVideo.style.display = "none";
+        document.getElementById("scoreOverlay").style.display = "flex";
+        if (camera && camera.stop) camera.stop();
       };
-
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-
-      const json = [];
-      let latestResults = null;
-
-      pose = new Pose({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
-      });
-      pose.setOptions({
-        modelComplexity: 1,
-        smoothLandmarks: true,
-        enableSegmentation: false,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5
-      });
-
-      pose.onResults(results => {
-        latestResults = results;
-      });
-
-      video.ontimeupdate = async () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0);
-        await pose.send({ image: canvas });
-
-        if (latestResults && latestResults.poseLandmarks) {
-          json.push({
-            frame: Math.floor(video.currentTime * 1000),
-            landmarks: latestResults.poseLandmarks.map(lm => ({
-              x: lm.x, y: lm.y, z: lm.z, visibility: lm.visibility
-            }))
-          });
-        }
-
-        video.currentTime += 0.2;
-      };
-
-      video.onended = () => {
-        pose.close();
-        URL.revokeObjectURL(video.src);
-        resolve(json);
-      };
-
-      video.onerror = () => reject(new Error('Ошибка загрузки видео'));
     });
   }
+
+  uploadVideoBtn.onclick = () => uploadVideoInput.click();
+  uploadVideoInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      messageEl.textContent = "Загружено: " + file.name;
+    }
+  };
 });
-
-
 
 
