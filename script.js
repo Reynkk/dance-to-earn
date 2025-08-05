@@ -44,45 +44,67 @@ window.addEventListener('DOMContentLoaded', () => {
       let step1Completed = false;
       let step2Completed = false;
 
-      pose.onResults(async results => {
-        overlayCanvas.width = videoElement.videoWidth;
-        overlayCanvas.height = videoElement.videoHeight;
-        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+     pose.onResults(async results => {
+  overlayCanvas.width = videoElement.videoWidth;
+  overlayCanvas.height = videoElement.videoHeight;
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
-        if (results.poseLandmarks) {
-          for (const lm of results.poseLandmarks) {
-            overlayCtx.beginPath();
-            overlayCtx.arc(lm.x * overlayCanvas.width, lm.y * overlayCanvas.height, 5, 0, 2 * Math.PI);
-            overlayCtx.fillStyle = 'red';
-            overlayCtx.fill();
-          }
+  if (results.poseLandmarks) {
+    for (const lm of results.poseLandmarks) {
+      overlayCtx.beginPath();
+      overlayCtx.arc(lm.x * overlayCanvas.width, lm.y * overlayCanvas.height, 5, 0, 2 * Math.PI);
+      overlayCtx.fillStyle = 'red';
+      overlayCtx.fill();
+    }
 
-          const nose = results.poseLandmarks[0];
-          const leftAnkle = results.poseLandmarks[27];
-          const rightAnkle = results.poseLandmarks[28];
+    const landmarks = results.poseLandmarks;
+    const nose = landmarks[0];
+    const leftAnkle = landmarks[27];
+    const rightAnkle = landmarks[28];
+    const leftWrist = landmarks[15];
+    const rightWrist = landmarks[16];
 
-          if (!step1Completed && nose && leftAnkle && rightAnkle && leftAnkle.y < 1 && rightAnkle.y < 1) {
-            step1Completed = true;
-            document.getElementById("step1").textContent = "✅ 1. Вы полностью в кадре";
-          }
+    // Условие 1: человек полностью в кадре
+    const allY = landmarks.map(lm => lm.y);
+    const minY = Math.min(...allY);
+    const maxY = Math.max(...allY);
 
-          const leftWrist = results.poseLandmarks[15];
-          const rightWrist = results.poseLandmarks[16];
-          if (step1Completed && leftWrist.y < nose.y && rightWrist.y < nose.y && !step2Completed) {
-            step2Completed = true;
-            document.getElementById("step2").textContent = "✅ 2. Руки подняты";
-            document.getElementById("calibrationMessage").textContent = "🎉 Калибровка завершена. Начинаем тренировку!";
+    const inFrame = (
+      minY > 0.05 && maxY < 0.95 &&
+      leftAnkle && rightAnkle &&
+      leftAnkle.visibility > 0.5 &&
+      rightAnkle.visibility > 0.5
+    );
 
-            // Завершение калибровки и запуск тренировки
-            setTimeout(async () => {
-              document.getElementById("calibrationOverlay").style.display = "none";
-              transitionToCornerVideo();
-              await showCountdown();
-              startTrainerVideo();
-            }, 2000);
-          }
-        }
-      });
+    if (!step1Completed && inFrame) {
+      step1Completed = true;
+      document.getElementById("step1").textContent = "✅ 1. Вы полностью в кадре";
+    }
+
+    // Условие 2: обе руки подняты выше головы
+    const handsUp =
+      step1Completed &&
+      leftWrist && rightWrist && nose &&
+      leftWrist.y < nose.y &&
+      rightWrist.y < nose.y &&
+      leftWrist.visibility > 0.5 &&
+      rightWrist.visibility > 0.5;
+
+    if (step1Completed && handsUp && !step2Completed) {
+      step2Completed = true;
+      document.getElementById("step2").textContent = "✅ 2. Руки подняты";
+      document.getElementById("calibrationMessage").textContent = "🎉 Калибровка завершена. Начинаем тренировку!";
+
+      setTimeout(async () => {
+        document.getElementById("calibrationOverlay").style.display = "none";
+        transitionToCornerVideo();
+        await showCountdown();
+        startTrainerVideo();
+      }, 1500);
+    }
+  }
+});
+
 
       camera = new Camera(videoElement, {
   onFrame: async () => {
@@ -224,6 +246,7 @@ camera.start();
     });
   }
 });
+
 
 
 
