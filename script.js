@@ -1,148 +1,152 @@
-window.addEventListener('DOMContentLoaded', () => {
-  const startTrainingBtn = document.getElementById('startTrainingBtn');
-  const uploadVideoBtn = document.getElementById('uploadVideoBtn');
-  const uploadVideoInput = document.getElementById('uploadVideoInput');
-  const videoElement = document.getElementById('video');
-  const trainerVideo = document.getElementById('trainerVideo');
-  const messageEl = document.getElementById('message');
-  const overlayCanvas = document.getElementById('overlay');
-  const overlayCtx = overlayCanvas.getContext('2d');
+let camera;
+let pose;
+let score = 0;
+let scoreInterval;
 
-  const calibrationMessage = document.getElementById("calibrationMessage");
-  const step1El = document.getElementById("step1");
-  const step2El = document.getElementById("step2");
+const videoElement = document.getElementById("video");
+const trainerVideo = document.getElementById("trainerVideo");
+const startBtn = document.getElementById("startTrainingBtn");
+const uploadBtn = document.getElementById("uploadVideoBtn");
+const uploadInput = document.getElementById("uploadVideoInput");
 
-  let pose = null;
-  let camera = null;
+const calibrationOverlay = document.getElementById("calibrationOverlay");
+const countdownOverlay = document.getElementById("countdownOverlay");
+const scoreOverlay = document.getElementById("scoreOverlay");
+const scoreValue = document.getElementById("scoreValue");
 
-  startTrainingBtn.onclick = async () => {
-    document.getElementById("calibrationOverlay").style.display = "block";
-    calibrationMessage.textContent = "Пожалуйста, пройдите калибровку";
+startBtn.onclick = async () => {
+  document.getElementById("buttons").style.display = "none";
+  await startCamera();
+  startCalibration();
+};
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      videoElement.srcObject = stream;
-      await videoElement.play();
+uploadBtn.onclick = () => uploadInput.click();
 
-      pose = new Pose({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
-      });
-      pose.setOptions({
-        modelComplexity: 1,
-        smoothLandmarks: true,
-        enableSegmentation: false,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5
-      });
-
-      let step1 = false;
-      let step2 = false;
-
-      pose.onResults(results => {
-        overlayCanvas.width = videoElement.videoWidth;
-        overlayCanvas.height = videoElement.videoHeight;
-        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-
-        if (results.poseLandmarks) {
-          for (const lm of results.poseLandmarks) {
-            overlayCtx.beginPath();
-            overlayCtx.arc(lm.x * overlayCanvas.width, lm.y * overlayCanvas.height, 5, 0, 2 * Math.PI);
-            overlayCtx.fillStyle = 'red';
-            overlayCtx.fill();
-          }
-
-          const nose = results.poseLandmarks[0];
-          const leftAnkle = results.poseLandmarks[27];
-          const rightAnkle = results.poseLandmarks[28];
-          const leftWrist = results.poseLandmarks[15];
-          const rightWrist = results.poseLandmarks[16];
-
-          if (!step1 && leftAnkle && rightAnkle && leftAnkle.y < 1 && rightAnkle.y < 1) {
-            step1 = true;
-            step1El.textContent = "✅ 1. Вы полностью в кадре";
-          }
-
-          if (step1 && leftWrist.y < nose.y && rightWrist.y < nose.y && !step2) {
-            step2 = true;
-            step2El.textContent = "✅ 2. Руки подняты";
-            calibrationMessage.textContent = "🎉 Калибровка завершена!";
-
-            setTimeout(() => {
-              document.getElementById("calibrationOverlay").style.display = "none";
-              transitionToCornerVideo();
-              startDanceSession();
-            }, 1500);
-          }
-        }
-      });
-
-      camera = new Camera(videoElement, {
-        onFrame: async () => await pose.send({ image: videoElement }),
-        width: 480,
-        height: 640
-      });
-
-      camera.start();
-    } catch (e) {
-      messageEl.textContent = "Ошибка доступа к камере: " + e.message;
-    }
-  };
-
-  function transitionToCornerVideo() {
-    videoElement.classList.add('small-video');
-    document.getElementById('buttons').classList.add('hidden');
+uploadInput.onchange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    trainerVideo.src = URL.createObjectURL(file);
   }
+};
 
-  function showCountdown(callback) {
-    const countdownEl = document.getElementById("countdownOverlay");
-    const steps = ["Приготовьтесь", "3", "2", "1"];
-    let index = 0;
+async function startCamera() {
+  return new Promise((resolve) => {
+    camera = new Camera(videoElement, {
+      onFrame: async () => {
+        await pose.send({ image: videoElement });
+      },
+      width: 640,
+      height: 480,
+    });
+    camera.start();
+    resolve();
+  });
+}
 
-    countdownEl.style.display = "flex";
-    countdownEl.textContent = steps[index];
+function startCalibration() {
+  calibrationOverlay.style.display = "block";
+
+  let inFrame = false;
+  let handsUp = false;
+
+  pose = new Pose({
+    locateFile: (file) =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`,
+  });
+
+  pose.setOptions({
+    modelComplexity: 1,
+    smoothLandmarks: true,
+    enableSegmentation: false,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5,
+  });
+
+  pose.onResults((results) => {
+    const landmarks = results.poseLandmarks;
+    if (!landmarks) return;
+
+    const leftWrist = landmarks[15];
+    const rightWrist = landmarks[16];
+    const nose = landmarks[0];
+    const leftAnkle = landmarks[27];
+    const rightAnkle = landmarks[28];
+
+    // Проверка на попадание всего тела в кадр
+    if (leftAnkle.visibility > 0.5 && rightAnkle.visibility > 0.5) {
+      inFrame = true;
+      document.getElementById("step1").style.color = "lightgreen";
+    }
+
+    // Проверка на поднятие обеих рук
+    if (
+      leftWrist.y < nose.y &&
+      rightWrist.y < nose.y &&
+      leftWrist.visibility > 0.5 &&
+      rightWrist.visibility > 0.5
+    ) {
+      handsUp = true;
+      document.getElementById("step2").style.color = "lightgreen";
+    }
+
+    if (inFrame && handsUp) {
+      calibrationOverlay.style.display = "none";
+      videoElement.classList.add("small-video");
+      startCountdown();
+    }
+  });
+}
+
+function startCountdown() {
+  showMessage("Приготовьтесь", () => {
+    let count = 3;
+    countdownOverlay.style.display = "flex";
+    countdownOverlay.innerText = count;
 
     const interval = setInterval(() => {
-      index++;
-      if (index >= steps.length) {
-        clearInterval(interval);
-        countdownEl.style.display = "none";
-        callback();
+      count--;
+      if (count > 0) {
+        countdownOverlay.innerText = count;
       } else {
-        countdownEl.textContent = steps[index];
+        clearInterval(interval);
+        countdownOverlay.style.display = "none";
+        startTrainerVideo();
       }
     }, 1000);
-  }
+  });
+}
 
-  function startDanceSession() {
-    showCountdown(() => {
-      trainerVideo.src = "trainer.mp4"; // путь к видео
-      trainerVideo.style.display = "block";
-      trainerVideo.play();
+function showMessage(text, callback) {
+  countdownOverlay.innerText = text;
+  countdownOverlay.style.display = "flex";
+  setTimeout(() => {
+    countdownOverlay.style.display = "none";
+    callback();
+  }, 1500);
+}
 
-      let score = 0;
-      const scoreValue = document.getElementById("scoreValue");
-      const scoreInterval = setInterval(() => {
-        score += Math.floor(Math.random() * 5); // заглушка
-        scoreValue.textContent = score;
-      }, 600);
+function startTrainerVideo() {
+  trainerVideo.style.display = "block";
+  trainerVideo.play();
 
-      trainerVideo.onended = () => {
-        clearInterval(scoreInterval);
-        videoElement.style.display = "none";
-        trainerVideo.style.display = "none";
-        document.getElementById("scoreOverlay").style.display = "flex";
-        if (camera && camera.stop) camera.stop();
-      };
-    });
-  }
+  score = 0;
+  scoreValue.textContent = score;
 
-  uploadVideoBtn.onclick = () => uploadVideoInput.click();
-  uploadVideoInput.onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      messageEl.textContent = "Загружено: " + file.name;
-    }
+  scoreInterval = setInterval(() => {
+    score++;
+    scoreValue.textContent = score;
+  }, 1000);
+
+  trainerVideo.onended = () => {
+    clearInterval(scoreInterval);
+    videoElement.style.display = "none";
+    trainerVideo.style.display = "none";
+    scoreOverlay.style.display = "flex";
+    if (camera && camera.stop) camera.stop();
+    document.getElementById("buttons").style.display = "block";
   };
-});
+}
+
+
 
 
