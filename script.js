@@ -137,38 +137,51 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // ✅ Запускаем видео тренера
   function startTrainerVideo() {
-    trainerVideo.src = "trainer.mp4";
-  trainerVideo.style.display = "block";
-  trainerVideo.play();
+    trainerVideo.src = "trainer.mp4"; // Убедись, что файл реально называется trainer.mp4 и находится рядом
+  trainerVideo.load();
 
-  scoreOverlay.style.display = "flex";  // Показываем очки
-  let interval = setInterval(() => {
-    currentScore += Math.floor(Math.random() * 3);
-    scoreValue.textContent = currentScore;
-  }, 500);
+  trainerVideo.oncanplay = () => {
+    // Убираем отсчёт
+    countdownOverlay.style.display = "none";
 
-  trainerVideo.onended = () => {
-    clearInterval(interval);
-    trainerVideo.style.display = "none";
-    videoElement.style.display = "none";
-    overlayCanvas.style.display = "none";
-    scoreOverlay.style.display = "none";
+    // Показываем видео тренера
+    trainerVideo.style.display = "block";
 
-    // Показать финальный счёт
-    const finalOverlay = document.createElement("div");
-    finalOverlay.style.position = "fixed";
-    finalOverlay.style.top = 0;
-    finalOverlay.style.left = 0;
-    finalOverlay.style.width = "100vw";
-    finalOverlay.style.height = "100vh";
-    finalOverlay.style.backgroundColor = "black";
-    finalOverlay.style.color = "white";
-    finalOverlay.style.fontSize = "48px";
-    finalOverlay.style.display = "flex";
-    finalOverlay.style.justifyContent = "center";
-    finalOverlay.style.alignItems = "center";
-    finalOverlay.innerText = `Ваш финальный счёт: ${currentScore}`;
-    document.body.appendChild(finalOverlay);
+    // Перемещаем камеру в угол
+    videoElement.classList.add("small-video");
+    overlayCanvas.classList.add("small-video");
+
+    // Показываем счёт
+    scoreOverlay.style.display = "block";
+
+    // Запускаем видео тренера
+    trainerVideo.play();
+
+    // Подсчёт очков
+    currentScore = 0;
+    const interval = setInterval(() => {
+      currentScore += Math.floor(Math.random() * 3);
+      scoreValue.textContent = currentScore;
+    }, 500);
+
+    trainerVideo.onended = () => {
+      clearInterval(interval);
+      trainerVideo.style.display = "none";
+      videoElement.style.display = "none";
+      overlayCanvas.style.display = "none";
+      scoreOverlay.style.display = "none";
+
+      // Показать финальный результат
+      const finalOverlay = document.createElement("div");
+      finalOverlay.id = "finalOverlay";
+      finalOverlay.textContent = `Ваш счёт: ${currentScore}`;
+      document.body.appendChild(finalOverlay);
+    };
+  };
+
+  trainerVideo.onerror = (e) => {
+    console.error("Ошибка загрузки видео тренера", e);
+    messageEl.textContent = "Не удалось загрузить видео тренера.";
   };
   }
 
@@ -265,6 +278,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
 
 
 
