@@ -119,42 +119,57 @@ window.addEventListener('DOMContentLoaded', () => {
   // ✅ Камера в угол, добавляем класс small-video
   function transitionToCornerVideo() {
     videoElement.classList.add("small-video");
-    overlayCanvas.classList.add("small-video"); // точно так же переместим canvas
+    overlayCanvas.classList.add("small-video");
     overlayCanvas.style.display = "block";
   }
 
   // ✅ Показываем 3...2...1
   async function showCountdown() {
-    countdownOverlay.style.display = "flex";
-    countdownOverlay.textContent = "Приготовьтесь";
+     countdownOverlay.style.display = "flex";
+  countdownOverlay.textContent = "Приготовьтесь";
+  await delay(1000);
+  for (let i = 3; i > 0; i--) {
+    countdownOverlay.textContent = i;
     await delay(1000);
-    for (let i = 3; i > 0; i--) {
-      countdownOverlay.textContent = i;
-      await delay(1000);
-    }
-    countdownOverlay.style.display = "none";
+  }
+  countdownOverlay.style.display = "none";
   }
 
   // ✅ Запускаем видео тренера
   function startTrainerVideo() {
-    trainerVideo.src = "trainer.mp4"; // Убедись, что файл лежит рядом!
-    trainerVideo.style.display = "block";
-    trainerVideo.play();
+    trainerVideo.src = "trainer.mp4";
+  trainerVideo.style.display = "block";
+  trainerVideo.play();
 
-    scoreOverlay.style.display = "flex";
+  scoreOverlay.style.display = "flex";  // Показываем очки
+  let interval = setInterval(() => {
+    currentScore += Math.floor(Math.random() * 3);
+    scoreValue.textContent = currentScore;
+  }, 500);
 
-    const interval = setInterval(() => {
-      currentScore += Math.floor(Math.random() * 3);
-      scoreValue.textContent = currentScore;
-    }, 500);
+  trainerVideo.onended = () => {
+    clearInterval(interval);
+    trainerVideo.style.display = "none";
+    videoElement.style.display = "none";
+    overlayCanvas.style.display = "none";
+    scoreOverlay.style.display = "none";
 
-    trainerVideo.onended = () => {
-      clearInterval(interval);
-      trainerVideo.style.display = "none";
-      videoElement.style.display = "none";
-      overlayCanvas.style.display = "none";
-      scoreOverlay.textContent = `Ваш счёт: ${currentScore}`;
-    };
+    // Показать финальный счёт
+    const finalOverlay = document.createElement("div");
+    finalOverlay.style.position = "fixed";
+    finalOverlay.style.top = 0;
+    finalOverlay.style.left = 0;
+    finalOverlay.style.width = "100vw";
+    finalOverlay.style.height = "100vh";
+    finalOverlay.style.backgroundColor = "black";
+    finalOverlay.style.color = "white";
+    finalOverlay.style.fontSize = "48px";
+    finalOverlay.style.display = "flex";
+    finalOverlay.style.justifyContent = "center";
+    finalOverlay.style.alignItems = "center";
+    finalOverlay.innerText = `Ваш финальный счёт: ${currentScore}`;
+    document.body.appendChild(finalOverlay);
+  };
   }
 
   // ✅ Загрузка пользовательского видео для генерации JSON
@@ -250,6 +265,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
 
 
 
