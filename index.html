@@ -19,7 +19,7 @@
 
   <div id="message"></div>
 
-  <div id="calibrationOverlay" style="display: none;">
+  <div id="calibrationOverlay" class="overlay-box" style="display: none;">
     <p id="calibrationMessage">Пожалуйста, пройдите калибровку</p>
     <ul>
       <li id="step1">▫ 1. Вы должны быть полностью в кадре</li>
@@ -28,10 +28,14 @@
   </div>
 
   <video id="video" playsinline muted></video>
-  <video id="trainerVideo" playsinline controls style="display:none; width: 100%; height: auto;"></video>
+  <video id="trainerVideo" playsinline style="display:none;"></video>
+  <canvas id="overlay"></canvas>
 
-  <canvas id="overlay" style="position:absolute; left:0; top:0; pointer-events:none;"></canvas>
+  <!-- Экраны -->
+  <div id="countdownOverlay"></div>
+  <div id="scoreOverlay">Ваш счёт: <span id="scoreValue">0</span></div>
 
   <script src="script.js" defer></script>
 </body>
 </html>
+
