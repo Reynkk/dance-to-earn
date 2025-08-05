@@ -10,6 +10,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const countdownOverlay = document.getElementById('countdownOverlay');
   const scoreOverlay = document.getElementById('scoreOverlay');
   const scoreValue = document.getElementById('scoreValue');
+  const calibrationOverlay = document.getElementById('calibrationOverlay');
+
   let camera = null;
   let pose = null;
   let currentScore = 0;
@@ -18,15 +20,26 @@ window.addEventListener('DOMContentLoaded', () => {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // ✅ Кнопка запуска тренировки
+  function prepareTrainerVideo() {
+    trainerVideo.src = "trainer.mp4";
+    trainerVideo.load();
+    trainerVideo.muted = false;
+    trainerVideo.play().then(() => {
+      trainerVideo.pause();
+      trainerVideo.currentTime = 0;
+      console.log("🎥 Видео тренера подготовлено");
+    }).catch(err => {
+      console.error("❌ Не удалось подготовить видео тренера:", err);
+    });
+  }
+
   startTrainingBtn.onclick = async () => {
     document.getElementById("buttons").style.display = "none";
-    document.getElementById("calibrationOverlay").style.display = "block";
+    calibrationOverlay.style.display = "flex";
     document.getElementById("calibrationMessage").textContent = "Пожалуйста, пройдите калибровку";
 
     try {
       videoElement.style.display = "block";
-      overlayCanvas.style.display = "block";
 
       pose = new Pose({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
@@ -92,11 +105,14 @@ window.addEventListener('DOMContentLoaded', () => {
             document.getElementById("step2").textContent = "✅ 2. Руки подняты";
             document.getElementById("calibrationMessage").textContent = "🎉 Калибровка завершена. Начинаем тренировку!";
 
+            // 🆕 Подготовка видео тренера
+            prepareTrainerVideo();
+
             setTimeout(async () => {
-              document.getElementById("calibrationOverlay").style.display = "none";
-              transitionToCornerVideo();      // ✅ Перемещаем камеру в угол
-              await showCountdown();          // ✅ Показываем обратный отсчёт
-              startTrainerVideo();            // ✅ Запускаем видео тренера
+              calibrationOverlay.style.display = "none";
+              transitionToCornerVideo();
+              await showCountdown();
+              startTrainerVideo();
             }, 1500);
           }
         }
@@ -110,88 +126,47 @@ window.addEventListener('DOMContentLoaded', () => {
         height: 640
       });
       camera.start();
-
     } catch (e) {
       messageEl.textContent = "Ошибка доступа к камере: " + e.message;
     }
   };
 
-  // ✅ Камера в угол, добавляем класс small-video
   function transitionToCornerVideo() {
     videoElement.classList.add("small-video");
-    overlayCanvas.classList.add("small-video");
-    overlayCanvas.style.display = "block";
   }
 
-  // ✅ Показываем 3...2...1
   async function showCountdown() {
-     countdownOverlay.style.display = "flex";
-  countdownOverlay.textContent = "Приготовьтесь";
-  await delay(1000);
-  for (let i = 3; i > 0; i--) {
-    countdownOverlay.textContent = i;
+    countdownOverlay.style.display = "flex";
+    countdownOverlay.textContent = "Приготовьтесь";
     await delay(1000);
-  }
-  countdownOverlay.style.display = "none";
+    for (let i = 3; i > 0; i--) {
+      countdownOverlay.textContent = i;
+      await delay(1000);
+    }
+    countdownOverlay.style.display = "none";
   }
 
-  // ✅ Запускаем видео тренера
   function startTrainerVideo() {
-  trainerVideo.src = "trainer.mp4"; // ваш путь к видео
-  trainerVideo.playsInline = true;
-  trainerVideo.controls = false;
-  trainerVideo.style.display = "block";
+    trainerVideo.style.display = "block";
+    trainerVideo.muted = false;
+    trainerVideo.play();
 
-  // Уменьшаем видео пользователя и canvas
-  videoElement.classList.add("small-video");
-  overlayCanvas.classList.add("small-video");
+    scoreOverlay.style.display = "flex";
 
-  scoreOverlay.style.display = "block";
+    const interval = setInterval(() => {
+      currentScore += Math.floor(Math.random() * 3);
+      scoreValue.textContent = currentScore;
+    }, 500);
 
-  // Попробовать воспроизведение
-  trainerVideo.load();
-  trainerVideo.play().then(() => {
-    console.log("Тренерское видео воспроизводится со звуком");
-  }).catch(error => {
-    console.warn("Ошибка воспроизведения видео тренера:", error);
-
-    // Предлагаем пользователю нажать для воспроизведения
-    let tapOverlay = document.createElement("div");
-    tapOverlay.textContent = "Нажмите, чтобы воспроизвести тренировку";
-    tapOverlay.style.position = "fixed";
-    tapOverlay.style.top = "50%";
-    tapOverlay.style.left = "50%";
-    tapOverlay.style.transform = "translate(-50%, -50%)";
-    tapOverlay.style.fontSize = "20px";
-    tapOverlay.style.color = "#fff";
-    tapOverlay.style.background = "rgba(0, 0, 0, 0.8)";
-    tapOverlay.style.padding = "20px";
-    tapOverlay.style.borderRadius = "10px";
-    tapOverlay.style.zIndex = "999";
-    tapOverlay.style.cursor = "pointer";
-    document.body.appendChild(tapOverlay);
-
-    tapOverlay.addEventListener("click", () => {
-      trainerVideo.play();
-      tapOverlay.remove();
-    });
-  });
-
-  const interval = setInterval(() => {
-    currentScore += Math.floor(Math.random() * 3);
-    scoreValue.textContent = currentScore;
-  }, 500);
-
-  trainerVideo.onended = () => {
-    clearInterval(interval);
-    trainerVideo.style.display = "none";
-    videoElement.style.display = "none";
-    overlayCanvas.style.display = "none";
-    scoreOverlay.textContent = `Ваш счёт: ${currentScore}`;
-  };
+    trainerVideo.onended = () => {
+      clearInterval(interval);
+      trainerVideo.style.display = "none";
+      videoElement.style.display = "none";
+      overlayCanvas.style.display = "none";
+      scoreOverlay.textContent = `Ваш счёт: ${currentScore}`;
+    };
   }
 
-  // ✅ Загрузка пользовательского видео для генерации JSON
   uploadVideoBtn.onclick = () => {
     uploadVideoInput.click();
   };
@@ -220,7 +195,6 @@ window.addEventListener('DOMContentLoaded', () => {
     URL.revokeObjectURL(a.href);
   }
 
-  // ✅ Обработка видео из файла
   async function processTrainingVideo(videoFile) {
     return new Promise((resolve, reject) => {
       const video = document.createElement('video');
@@ -236,7 +210,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-
       const json = [];
       let latestResults = null;
 
