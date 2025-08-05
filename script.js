@@ -137,51 +137,57 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // ✅ Запускаем видео тренера
   function startTrainerVideo() {
-    trainerVideo.src = "trainer.mp4"; // Убедись, что файл реально называется trainer.mp4 и находится рядом
+  trainerVideo.src = "trainer.mp4"; // ваш путь к видео
+  trainerVideo.playsInline = true;
+  trainerVideo.controls = false;
+  trainerVideo.style.display = "block";
+
+  // Уменьшаем видео пользователя и canvas
+  videoElement.classList.add("small-video");
+  overlayCanvas.classList.add("small-video");
+
+  scoreOverlay.style.display = "block";
+
+  // Попробовать воспроизведение
   trainerVideo.load();
+  trainerVideo.play().then(() => {
+    console.log("Тренерское видео воспроизводится со звуком");
+  }).catch(error => {
+    console.warn("Ошибка воспроизведения видео тренера:", error);
 
-  trainerVideo.oncanplay = () => {
-    // Убираем отсчёт
-    countdownOverlay.style.display = "none";
+    // Предлагаем пользователю нажать для воспроизведения
+    let tapOverlay = document.createElement("div");
+    tapOverlay.textContent = "Нажмите, чтобы воспроизвести тренировку";
+    tapOverlay.style.position = "fixed";
+    tapOverlay.style.top = "50%";
+    tapOverlay.style.left = "50%";
+    tapOverlay.style.transform = "translate(-50%, -50%)";
+    tapOverlay.style.fontSize = "20px";
+    tapOverlay.style.color = "#fff";
+    tapOverlay.style.background = "rgba(0, 0, 0, 0.8)";
+    tapOverlay.style.padding = "20px";
+    tapOverlay.style.borderRadius = "10px";
+    tapOverlay.style.zIndex = "999";
+    tapOverlay.style.cursor = "pointer";
+    document.body.appendChild(tapOverlay);
 
-    // Показываем видео тренера
-    trainerVideo.style.display = "block";
+    tapOverlay.addEventListener("click", () => {
+      trainerVideo.play();
+      tapOverlay.remove();
+    });
+  });
 
-    // Перемещаем камеру в угол
-    videoElement.classList.add("small-video");
-    overlayCanvas.classList.add("small-video");
+  const interval = setInterval(() => {
+    currentScore += Math.floor(Math.random() * 3);
+    scoreValue.textContent = currentScore;
+  }, 500);
 
-    // Показываем счёт
-    scoreOverlay.style.display = "block";
-
-    // Запускаем видео тренера
-    trainerVideo.play();
-
-    // Подсчёт очков
-    currentScore = 0;
-    const interval = setInterval(() => {
-      currentScore += Math.floor(Math.random() * 3);
-      scoreValue.textContent = currentScore;
-    }, 500);
-
-    trainerVideo.onended = () => {
-      clearInterval(interval);
-      trainerVideo.style.display = "none";
-      videoElement.style.display = "none";
-      overlayCanvas.style.display = "none";
-      scoreOverlay.style.display = "none";
-
-      // Показать финальный результат
-      const finalOverlay = document.createElement("div");
-      finalOverlay.id = "finalOverlay";
-      finalOverlay.textContent = `Ваш счёт: ${currentScore}`;
-      document.body.appendChild(finalOverlay);
-    };
-  };
-
-  trainerVideo.onerror = (e) => {
-    console.error("Ошибка загрузки видео тренера", e);
-    messageEl.textContent = "Не удалось загрузить видео тренера.";
+  trainerVideo.onended = () => {
+    clearInterval(interval);
+    trainerVideo.style.display = "none";
+    videoElement.style.display = "none";
+    overlayCanvas.style.display = "none";
+    scoreOverlay.textContent = `Ваш счёт: ${currentScore}`;
   };
   }
 
@@ -278,6 +284,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
 
 
 
