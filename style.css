@@ -43,33 +43,22 @@ button:hover {
 }
 
 .small-video {
-  width: 160px !important;
-  height: 120px !important;
+  width: 160px;
+  height: 120px;
   bottom: 10px;
   right: 10px;
   position: fixed;
   object-fit: cover;
   z-index: 10;
-}
-
-#trainerVideo {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 3;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
+  transition: all 0.5s ease;
 }
 
 #overlay {
-  position: fixed;
-  top: 0;
+  position: absolute;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 2;
+  top: 0;
   pointer-events: none;
+  z-index: 2;
 }
 
 .overlay-box {
@@ -83,25 +72,45 @@ button:hover {
   text-align: left;
 }
 
-#countdownOverlay, #scoreOverlay {
+#trainerVideo {
+  position: relative;
+  z-index: 5;
+  width: 100vw;
+  height: auto;
+}
+
+.center-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 5em;
+  font-weight: bold;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: none;
+}
+
+#scoreOverlay {
   display: none;
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: #000;
-  color: #fff;
-  font-size: 64px;
-  z-index: 100;
+  background: black;
+  color: white;
+  font-size: 36px;
+  font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-}
-
-.hidden {
-  display: none !important;
+  z-index: 100;
 }
 
 
