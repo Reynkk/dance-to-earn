@@ -26,9 +26,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("calibrationMessage").textContent = "Пожалуйста, пройдите калибровку";
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-      videoElement.srcObject = stream;
-      await videoElement.play();
+     
       videoElement.style.display = "block";
 
       pose = new Pose({
@@ -87,13 +85,13 @@ window.addEventListener('DOMContentLoaded', () => {
       });
 
       camera = new Camera(videoElement, {
-        onFrame: async () => {
-          await pose.send({ image: videoElement });
-        },
-        width: 480,
-        height: 640
-      });
-      camera.start();
+  onFrame: async () => {
+    await pose.send({ image: videoElement });
+  },
+  width: 480,
+  height: 640
+});
+camera.start();
     } catch (e) {
       messageEl.textContent = "Ошибка доступа к камере: " + e.message;
     }
@@ -226,6 +224,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
 
 
 
