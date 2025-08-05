@@ -2,14 +2,16 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  text-align: center;
   background: #111;
   color: #fff;
   overflow: hidden;
+  position: relative;
 }
 
 h1 {
   margin-top: 20px;
+  z-index: 5;
+  position: relative;
 }
 
 #buttons {
@@ -34,7 +36,7 @@ button:hover {
   cursor: pointer;
 }
 
-/* Камера пользователя – во весь экран до калибровки */
+/* КАМЕРА: до калибровки — полноэкранная */
 #video {
   position: fixed;
   top: 0;
@@ -46,7 +48,7 @@ button:hover {
   transition: all 0.5s ease;
 }
 
-/* После калибровки – в правый нижний угол */
+/* ПОСЛЕ калибровки — в угол */
 .small-video {
   width: 160px;
   height: 120px;
@@ -54,18 +56,22 @@ button:hover {
   bottom: 10px;
   right: 10px;
   object-fit: cover;
-  z-index: 10;
+  z-index: 5;
   transition: all 0.5s ease;
 }
 
+/* Canvas должен быть такого же размера как видео пользователя */
 #overlay {
-  position: absolute;
-  left: 0;
-  top: 0;
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 160px;
+  height: 120px;
   pointer-events: none;
-  z-index: 2;
+  z-index: 6;
 }
 
+/* Калибровочный блок */
 .overlay-box {
   position: fixed;
   top: 20px;
@@ -73,10 +79,11 @@ button:hover {
   background: rgba(0, 0, 0, 0.7);
   padding: 20px;
   border-radius: 10px;
-  z-index: 5;
+  z-index: 10;
   text-align: left;
 }
 
+/* Тренер — на весь экран */
 #trainerVideo {
   position: fixed;
   top: 0;
@@ -84,10 +91,10 @@ button:hover {
   width: 100vw;
   height: 100vh;
   object-fit: cover;
-  z-index: 3;
+  z-index: 2;
 }
 
-/* Новый адаптивный и центрированный стиль для обратного отсчета */
+/* Отсчёт — по центру, поверх всего */
 #countdownOverlay {
   position: fixed;
   top: 0;
@@ -109,7 +116,7 @@ button:hover {
   display: none;
 }
 
-/* Счётчик очков */
+/* Счёт */
 #scoreOverlay {
   display: none;
   position: fixed;
@@ -123,6 +130,8 @@ button:hover {
   border-radius: 8px;
   z-index: 100;
 }
+
+
 
 
 
