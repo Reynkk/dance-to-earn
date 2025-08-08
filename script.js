@@ -11,6 +11,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const scoreOverlay = document.getElementById('scoreOverlay');
   const scoreValue = document.getElementById('scoreValue');
   const calibrationOverlay = document.getElementById('calibrationOverlay');
+  const finalOverlay = document.getElementById('finalOverlay');
+  const finalScoreValue = document.getElementById('finalScoreValue');
+  const restartBtn = document.getElementById('restartBtn');
 
   let camera = null;
   let pose = null;
@@ -20,20 +23,21 @@ window.addEventListener('DOMContentLoaded', () => {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  function prepareTrainerVideo() {
+  startTrainingBtn.onclick = async () => {
+    // Активируем trainerVideo в момент клика (требуется для мобильных устройств)
     trainerVideo.src = "trainer.mp4";
     trainerVideo.load();
     trainerVideo.muted = false;
-    trainerVideo.play().then(() => {
+
+    try {
+      await trainerVideo.play();
       trainerVideo.pause();
       trainerVideo.currentTime = 0;
-      console.log("🎥 Видео тренера подготовлено");
-    }).catch(err => {
-      console.error("❌ Не удалось подготовить видео тренера:", err);
-    });
-  }
+      console.log("🎥 Тренерское видео предварительно активировано");
+    } catch (err) {
+      console.warn("⚠️ Видео не активировано:", err);
+    }
 
-  startTrainingBtn.onclick = async () => {
     document.getElementById("buttons").style.display = "none";
     calibrationOverlay.style.display = "flex";
     document.getElementById("calibrationMessage").textContent = "Пожалуйста, пройдите калибровку";
@@ -105,9 +109,6 @@ window.addEventListener('DOMContentLoaded', () => {
             document.getElementById("step2").textContent = "✅ 2. Руки подняты";
             document.getElementById("calibrationMessage").textContent = "🎉 Калибровка завершена. Начинаем тренировку!";
 
-            // 🆕 Подготовка видео тренера
-            prepareTrainerVideo();
-
             setTimeout(async () => {
               calibrationOverlay.style.display = "none";
               transitionToCornerVideo();
@@ -149,7 +150,10 @@ window.addEventListener('DOMContentLoaded', () => {
   function startTrainerVideo() {
     trainerVideo.style.display = "block";
     trainerVideo.muted = false;
-    trainerVideo.play();
+
+    trainerVideo.play().catch(err => {
+      console.error("🚫 Не удалось воспроизвести видео:", err);
+    });
 
     scoreOverlay.style.display = "flex";
 
@@ -160,13 +164,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     trainerVideo.onended = () => {
       clearInterval(interval);
-  trainerVideo.style.display = "none";
-  videoElement.style.display = "none";
-  overlayCanvas.style.display = "none";
-  scoreOverlay.style.display = "none";
+      trainerVideo.style.display = "none";
+      videoElement.style.display = "none";
+      overlayCanvas.style.display = "none";
+      scoreOverlay.style.display = "none";
 
-  document.getElementById("finalScoreValue").textContent = currentScore;
-  document.getElementById("finalOverlay").style.display = "flex";
+      finalScoreValue.textContent = currentScore;
+      finalOverlay.style.display = "flex";
     };
   }
 
@@ -259,15 +263,18 @@ window.addEventListener('DOMContentLoaded', () => {
       video.onerror = () => reject(new Error('Ошибка загрузки видео'));
     });
   }
-document.getElementById("restartBtn").onclick = () => {
-  currentScore = 0;
-  scoreValue.textContent = currentScore;
 
-  document.getElementById("finalOverlay").style.display = "none";
-  document.getElementById("buttons").style.display = "block";
-  messageEl.textContent = "";
-};
+  // Повторная тренировка
+  restartBtn.onclick = () => {
+    currentScore = 0;
+    scoreValue.textContent = currentScore;
+    finalOverlay.style.display = "none";
+    messageEl.textContent = "";
+    document.getElementById("buttons").style.display = "block";
+  };
 });
+
+
 
 
 
