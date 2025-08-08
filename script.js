@@ -160,10 +160,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     trainerVideo.onended = () => {
       clearInterval(interval);
-      trainerVideo.style.display = "none";
-      videoElement.style.display = "none";
-      overlayCanvas.style.display = "none";
-      scoreOverlay.textContent = `Ваш счёт: ${currentScore}`;
+  trainerVideo.style.display = "none";
+  videoElement.style.display = "none";
+  overlayCanvas.style.display = "none";
+  scoreOverlay.style.display = "none";
+
+  document.getElementById("finalScoreValue").textContent = currentScore;
+  document.getElementById("finalOverlay").style.display = "flex";
     };
   }
 
@@ -256,7 +259,16 @@ window.addEventListener('DOMContentLoaded', () => {
       video.onerror = () => reject(new Error('Ошибка загрузки видео'));
     });
   }
+document.getElementById("restartBtn").onclick = () => {
+  currentScore = 0;
+  scoreValue.textContent = currentScore;
+
+  document.getElementById("finalOverlay").style.display = "none";
+  document.getElementById("buttons").style.display = "block";
+  messageEl.textContent = "";
+};
 });
+
 
 
 
