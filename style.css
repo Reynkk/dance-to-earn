@@ -68,12 +68,17 @@ button:hover {
 /* Переход камеры в правый нижний угол */
 .small-video {
   width: 160px !important;
-  height: 120px !important;
-  bottom: 10px !important;
-  right: 10px !important;
+  height: 280px !important;   /* вертикальное */
+  bottom: 20px !important;
+  right: 20px !important;
+  top: auto !important;
+  left: auto !important;
   position: fixed !important;
   object-fit: cover !important;
-  z-index: 15 !important; /* Самый верхний слой */
+  z-index: 15 !important; /* Поднимаем слой */
+  border-radius: 10px;
+  border: 2px solid white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.6);
   transition: all 0.5s ease;
 }
 
@@ -171,6 +176,7 @@ button:hover {
   z-index: 100;
   display: none;
 }
+
 
 
 
