@@ -54,25 +54,26 @@ button:hover {
 
 /* Видео пользователя - по умолчанию во весь экран */
 #video {
-  position: fixed;
+ position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
   object-fit: cover;
-  z-index: 1;
+  z-index: 5; /* Уровень камеры */
   transition: all 0.5s ease;
+  background: transparent;
 }
 
 /* Переход камеры в правый нижний угол */
 .small-video {
-  width: 160px;
-  height: 120px;
-  bottom: 10px;
-  right: 10px;
-  position: fixed;
-  object-fit: cover;
-  z-index: 10;
+  width: 160px !important;
+  height: 120px !important;
+  bottom: 10px !important;
+  right: 10px !important;
+  position: fixed !important;
+  object-fit: cover !important;
+  z-index: 15 !important; /* Самый верхний слой */
   transition: all 0.5s ease;
 }
 
@@ -84,7 +85,8 @@ button:hover {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 2;
+  z-index: 6; /* Поверх камеры */
+  background: transparent;
 }
 
 #overlay.small-video {
@@ -115,8 +117,9 @@ button:hover {
   width: 100vw;
   height: 100vh;
   object-fit: cover;
-  z-index: 3;
+  z-index: 4; /* Ниже камеры */
   display: none;
+  background: black;
 }
 
 /* Отсчёт по центру */
@@ -168,6 +171,7 @@ button:hover {
   z-index: 100;
   display: none;
 }
+
 
 
 
