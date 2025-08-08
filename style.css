@@ -36,6 +36,22 @@ button:hover {
   cursor: pointer;
 }
 
+#finalOverlay button {
+  margin-top: 20px;
+  padding: 15px 30px;
+  font-size: 24px;
+  background-color: #444;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  transition: background-color 0.3s;
+}
+
+#finalOverlay button:hover {
+  background-color: #666;
+  cursor: pointer;
+}
+
 /* Видео пользователя - по умолчанию во весь экран */
 #video {
   position: fixed;
@@ -152,6 +168,7 @@ button:hover {
   z-index: 100;
   display: none;
 }
+
 
 
 
