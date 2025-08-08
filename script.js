@@ -148,30 +148,49 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function startTrainerVideo() {
-    trainerVideo.style.display = "block";
-    trainerVideo.muted = false;
+    // Показываем видео тренера
+  trainerVideo.style.display = "block";
+  trainerVideo.muted = false;
 
-    trainerVideo.play().catch(err => {
-      console.error("🚫 Не удалось воспроизвести видео:", err);
-    });
+  // Показываем очки
+  scoreOverlay.style.display = "flex";
 
-    scoreOverlay.style.display = "flex";
+  // Запускаем видео тренера со звуком
+  trainerVideo.play().catch(err => {
+    console.error("🚫 Не удалось воспроизвести видео тренера:", err);
+  });
 
-    const interval = setInterval(() => {
-      currentScore += Math.floor(Math.random() * 3);
-      scoreValue.textContent = currentScore;
-    }, 500);
+  // Переводим камеру пользователя в угол (если еще не сделано)
+  videoElement.classList.add("small-video");
+  overlayCanvas.classList.add("small-video");
 
-    trainerVideo.onended = () => {
-      clearInterval(interval);
-      trainerVideo.style.display = "none";
-      videoElement.style.display = "none";
-      overlayCanvas.style.display = "none";
-      scoreOverlay.style.display = "none";
+  // Начинаем обновление очков
+  const interval = setInterval(() => {
+    currentScore += Math.floor(Math.random() * 3); // имитация набора очков
+    scoreValue.textContent = currentScore;
+  }, 500);
 
-      finalScoreValue.textContent = currentScore;
-      finalOverlay.style.display = "flex";
-    };
+  // Когда видео закончится
+  trainerVideo.onended = () => {
+    clearInterval(interval);
+
+    trainerVideo.style.display = "none";
+
+    // Можно оставить камеру в углу или убрать, на твой выбор:
+    // Если хочешь оставить:
+    // videoElement.style.display = "block";
+
+    // Если хочешь убрать после тренировки:
+    videoElement.style.display = "none";
+    videoElement.classList.remove("small-video");
+    overlayCanvas.classList.remove("small-video");
+    overlayCanvas.style.display = "none";
+
+    scoreOverlay.style.display = "none";
+
+    finalScoreValue.textContent = currentScore;
+    finalOverlay.style.display = "flex";
+  };
   }
 
   uploadVideoBtn.onclick = () => {
@@ -273,6 +292,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("buttons").style.display = "block";
   };
 });
+
 
 
 
