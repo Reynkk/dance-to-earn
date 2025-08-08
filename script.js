@@ -16,15 +16,46 @@ window.addEventListener('DOMContentLoaded', () => {
   const restartBtn = document.getElementById('restartBtn');
 
   let camera = null;
-  let pose = null;
+  let poseUser = null;
+  let poseTrainer = null;
+  let userPoseLandmarks = null;
+  let trainerPoseLandmarks = null;
   let currentScore = 0;
+  let compareInterval = null;
 
   function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  // Функция сравнения поз - возвращает совпадение 0..1
+  function comparePoses(landmarks1, landmarks2) {
+    if (!landmarks1 || !landmarks2) return 0;
+
+    // Вычисляем среднее расстояние по ключевым точкам (нормализованное)
+    let totalDist = 0;
+    let count = 0;
+    for (let i = 0; i < landmarks1.length; i++) {
+      if (!landmarks1[i] || !landmarks2[i]) continue;
+      const dx = landmarks1[i].x - landmarks2[i].x;
+      const dy = landmarks1[i].y - landmarks2[i].y;
+      const dz = (landmarks1[i].z || 0) - (landmarks2[i].z || 0);
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      totalDist += dist;
+      count++;
+    }
+    if (count === 0) return 0;
+
+    const avgDist = totalDist / count;
+
+    // Чем меньше расстояние — тем выше совпадение
+    // Нормируем в диапазон 0..1 (0.2 — условный порог максимального расстояния)
+    const similarity = Math.max(0, 1 - avgDist / 0.2);
+
+    return similarity;
+  }
+
   startTrainingBtn.onclick = async () => {
-    // Активируем trainerVideo в момент клика (требуется для мобильных устройств)
+    // Активируем trainerVideo (для мобильных)
     trainerVideo.src = "trainer.mp4";
     trainerVideo.load();
     trainerVideo.muted = false;
@@ -45,11 +76,12 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       videoElement.style.display = "block";
 
-      pose = new Pose({
+      // Инициализация MediaPipe Pose для пользователя
+      poseUser = new Pose({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
       });
 
-      pose.setOptions({
+      poseUser.setOptions({
         modelComplexity: 1,
         smoothLandmarks: true,
         enableSegmentation: false,
@@ -60,20 +92,24 @@ window.addEventListener('DOMContentLoaded', () => {
       let step1Completed = false;
       let step2Completed = false;
 
-      pose.onResults(async results => {
+      poseUser.onResults(async results => {
         overlayCanvas.width = videoElement.videoWidth;
         overlayCanvas.height = videoElement.videoHeight;
         overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
         if (results.poseLandmarks) {
-          for (const lm of results.poseLandmarks) {
+          userPoseLandmarks = results.poseLandmarks;
+
+          // Рисуем красные точки пользователя
+          for (const lm of userPoseLandmarks) {
             overlayCtx.beginPath();
             overlayCtx.arc(lm.x * overlayCanvas.width, lm.y * overlayCanvas.height, 5, 0, 2 * Math.PI);
             overlayCtx.fillStyle = 'red';
             overlayCtx.fill();
           }
 
-          const landmarks = results.poseLandmarks;
+          // Калибровка: проверяем что пользователь в кадре и руки подняты
+          const landmarks = userPoseLandmarks;
           const nose = landmarks[0];
           const leftAnkle = landmarks[27];
           const rightAnkle = landmarks[28];
@@ -121,12 +157,55 @@ window.addEventListener('DOMContentLoaded', () => {
 
       camera = new Camera(videoElement, {
         onFrame: async () => {
-          await pose.send({ image: videoElement });
+          await poseUser.send({ image: videoElement });
         },
         width: 480,
         height: 640
       });
       camera.start();
+
+      // Инициализация MediaPipe Pose для тренера
+      poseTrainer = new Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
+      });
+
+      poseTrainer.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+
+      const trainerCanvas = document.createElement('canvas');
+      const trainerCtx = trainerCanvas.getContext('2d');
+
+      trainerVideo.addEventListener('play', () => {
+        trainerCanvas.width = trainerVideo.videoWidth;
+        trainerCanvas.height = trainerVideo.videoHeight;
+      });
+
+      poseTrainer.onResults(results => {
+        if (results.poseLandmarks) {
+          trainerPoseLandmarks = results.poseLandmarks;
+        }
+      });
+
+      // Обработка кадров тренерского видео для получения поз
+      async function processTrainerFrame() {
+        if (trainerVideo.paused || trainerVideo.ended) {
+          trainerPoseLandmarks = null;
+          return;
+        }
+        trainerCtx.drawImage(trainerVideo, 0, 0, trainerCanvas.width, trainerCanvas.height);
+        await poseTrainer.send({ image: trainerCanvas });
+        requestAnimationFrame(processTrainerFrame);
+      }
+
+      trainerVideo.addEventListener('play', () => {
+        processTrainerFrame();
+      });
+
     } catch (e) {
       messageEl.textContent = "Ошибка доступа к камере: " + e.message;
     }
@@ -134,6 +213,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function transitionToCornerVideo() {
     videoElement.classList.add("small-video");
+    overlayCanvas.classList.add("small-video");
   }
 
   async function showCountdown() {
@@ -148,49 +228,52 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function startTrainerVideo() {
-    // Показываем видео тренера
-  trainerVideo.style.display = "block";
-  trainerVideo.muted = false;
+    trainerVideo.style.display = "block";
+    trainerVideo.muted = false;
 
-  // Показываем очки
-  scoreOverlay.style.display = "flex";
+    scoreOverlay.style.display = "flex";
 
-  // Запускаем видео тренера со звуком
-  trainerVideo.play().catch(err => {
-    console.error("🚫 Не удалось воспроизвести видео тренера:", err);
-  });
+    trainerVideo.play().catch(err => {
+      console.error("🚫 Не удалось воспроизвести видео тренера:", err);
+    });
 
-  // Переводим камеру пользователя в угол (если еще не сделано)
-  videoElement.classList.add("small-video");
-  overlayCanvas.classList.add("small-video");
+    videoElement.classList.add("small-video");
+    overlayCanvas.classList.add("small-video");
 
-  // Начинаем обновление очков
-  const interval = setInterval(() => {
-    currentScore += Math.floor(Math.random() * 3); // имитация набора очков
+    currentScore = 0;
     scoreValue.textContent = currentScore;
-  }, 500);
 
-  // Когда видео закончится
-  trainerVideo.onended = () => {
-    clearInterval(interval);
+    // Сравниваем позы 2 раза в секунду и начисляем очки
+    compareInterval = setInterval(() => {
+      if (!userPoseLandmarks || !trainerPoseLandmarks) return;
 
-    trainerVideo.style.display = "none";
+      const similarity = comparePoses(userPoseLandmarks, trainerPoseLandmarks);
 
-    // Можно оставить камеру в углу или убрать, на твой выбор:
-    // Если хочешь оставить:
-    // videoElement.style.display = "block";
+      // Если похожесть > 0.75, начисляем очко
+      if (similarity > 0.75) {
+        currentScore++;
+        scoreValue.textContent = currentScore;
+      }
 
-    // Если хочешь убрать после тренировки:
-    videoElement.style.display = "none";
-    videoElement.classList.remove("small-video");
-    overlayCanvas.classList.remove("small-video");
-    overlayCanvas.style.display = "none";
+      // Можно выводить в консоль для отладки
+      // console.log("Similarity:", similarity.toFixed(2), "Score:", currentScore);
+    }, 500);
 
-    scoreOverlay.style.display = "none";
+    trainerVideo.onended = () => {
+      clearInterval(compareInterval);
 
-    finalScoreValue.textContent = currentScore;
-    finalOverlay.style.display = "flex";
-  };
+      trainerVideo.style.display = "none";
+
+      videoElement.style.display = "none";
+      videoElement.classList.remove("small-video");
+      overlayCanvas.classList.remove("small-video");
+      overlayCanvas.style.display = "none";
+
+      scoreOverlay.style.display = "none";
+
+      finalScoreValue.textContent = currentScore;
+      finalOverlay.style.display = "flex";
+    };
   }
 
   uploadVideoBtn.onclick = () => {
@@ -283,7 +366,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Повторная тренировка
   restartBtn.onclick = () => {
     currentScore = 0;
     scoreValue.textContent = currentScore;
@@ -292,6 +374,8 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("buttons").style.display = "block";
   };
 });
+
+
 
 
 
