@@ -67,8 +67,8 @@ button:hover {
 
 /* Переход камеры в правый нижний угол */
 .small-video {
-  width: 160px !important;
-  height: 280px !important;   /* вертикальное */
+  width: 80px !important;
+  height: 140px !important;   /* вертикальное */
   bottom: 20px !important;
   right: 20px !important;
   top: auto !important;
@@ -176,6 +176,7 @@ button:hover {
   z-index: 100;
   display: none;
 }
+
 
 
 
