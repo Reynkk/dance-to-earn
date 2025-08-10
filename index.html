@@ -1,70 +1,154 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Тренировка с TON и Telegram</title>
-<link rel="stylesheet" href="style.css" />
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dance to Earn — Demo</title>
+
+  <!-- styles -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Telegram Web App API (используется только внутри Telegram) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- TonConnect SDK (для реального подключения TON-кошелька) -->
+  <script src="https://unpkg.com/@tonconnect/sdk/dist/tonconnect.min.js"></script>
+
+  <!-- MediaPipe (только для вкладки тренировки) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 </head>
 <body>
-  <!-- Загрузка -->
-  <div id="loadingScreen" class="overlay centered">
-    <div>
-      <div class="spinner"></div>
-      <div>Загрузка...</div>
+  <!-- SPLASH -->
+  <div id="splash" class="screen center">
+    <div class="logo">Dance to Earn</div>
+    <div class="loading">Загрузка…</div>
+  </div>
+
+  <!-- AUTH SCREEN -->
+  <div id="auth" class="screen center hidden">
+    <h2>Войдите через Telegram</h2>
+
+    <!-- Если страница открыта в Telegram WebApp, мы покажем профиль -->
+    <div id="tgProfile" class="profile hidden">
+      <img id="tgAvatar" alt="avatar" />
+      <div id="tgName"></div>
+      <div id="tgUsername"></div>
+    </div>
+
+    <!-- Fallback: Telegram Login Widget (для тестов в браузере) -->
+    <!-- Замените data-telegram-login на имя вашего бота (без @) -->
+    <div id="tgLoginWidget" style="margin:10px;">
+      <!-- Replace YOUR_BOT_USERNAME below before production -->
+      <script async src="https://telegram.org/js/telegram-widget.js?15"
+              data-telegram-login="YOUR_BOT_USERNAME"
+              data-size="large"
+              data-userpic="false"
+              data-lang="ru"
+              data-radius="12"
+              data-request-access="write"
+              data-onauth="onTelegramAuth(user)"
+      ></script>
+    </div>
+
+    <hr style="width:80%; margin:16px auto;" />
+
+    <button id="connectTonBtn" class="btn">Подключить TON-кошелёк</button>
+    <div id="tonStatus" style="margin-top:10px;color:#ddd"></div>
+
+    <div style="margin-top:20px;">
+      <button id="proceedBtn" class="btn primary" disabled>Перейти в приложение</button>
     </div>
   </div>
 
-  <!-- Авторизация Telegram -->
-  <div id="telegramAuth" class="overlay centered hidden">
-    <script async src="https://telegram.org/js/telegram-widget.js?15"
-      data-telegram-login="your_bot_username"
-      data-size="large"
-      data-userpic="false"
-      data-auth-url=""
-      data-request-access="write"
-      data-userpic="false"
-      data-lang="ru"
-      data-on-auth="onTelegramAuth"
-    ></script>
-  </div>
-
-  <!-- Подключение TON -->
-  <div id="tonConnect" class="overlay centered hidden">
-    <button id="connectTonBtn">Подключить TON-кошелек</button>
-    <div id="tonAddress"></div>
-  </div>
-
-  <!-- Основной интерфейс -->
+  <!-- MAIN APP -->
   <div id="app" class="hidden">
-    <div id="tabs">
-      <button class="tabBtn active" data-tab="training">Тренировка</button>
-      <button class="tabBtn" data-tab="top">ТОП</button>
-      <button class="tabBtn" data-tab="social">Социалка</button>
-    </div>
+    <!-- header -->
+    <header>
+      <div class="left">
+        <div id="userInfo"></div>
+      </div>
+      <div class="center">Dance to Earn</div>
+      <div class="right">
+        <div id="walletInfo"></div>
+      </div>
+    </header>
 
-    <div id="tabContent">
-      <section id="training" class="tabContent active">
-        <!-- Здесь твой основной тренировочный UI -->
-        <!-- Твой существующий контент для тренировки -->
+    <!-- pages -->
+    <main id="main">
+      <!-- TRAINING PAGE -->
+      <section id="page-training" class="page active">
+        <div class="card">
+          <h3>Тренировка</h3>
+          <div id="trainingContainer">
+            <!-- Здесь будут элементы тренировки (камера, калибровка...) -->
+            <div id="trainingUI">
+              <button id="startTrainingBtn" class="btn">Начать тренировку</button>
+              <button id="uploadVideoBtn" class="btn">Загрузить видео для тренировки</button>
+              <input id="uploadVideoInput" type="file" accept="video/*" style="display:none" />
+              <div id="message"></div>
+
+              <div id="calibrationOverlay" class="overlay-box hidden">
+                <p id="calibrationMessage">Пожалуйста, пройдите калибровку</p>
+                <ul>
+                  <li id="step1">▫ 1. Вы должны быть полностью в кадре</li>
+                  <li id="step2">▫ 2. Поднимите обе руки</li>
+                </ul>
+              </div>
+
+              <video id="video" playsinline muted class="hidden"></video>
+              <canvas id="overlay" class="hidden"></canvas>
+
+              <div id="countdownOverlay" class="center-overlay hidden"></div>
+              <video id="trainerVideo" playsinline class="hidden"></video>
+              <div id="scoreOverlay" class="hidden">Ваш счёт: <span id="scoreValue">0</span></div>
+            </div>
+          </div>
+        </div>
       </section>
-      <section id="top" class="tabContent hidden">
-        <h2>Таблица лидеров</h2>
-        <div id="leaderboard">Загрузка лидеров...</div>
+
+      <!-- RANKING PAGE -->
+      <section id="page-ranking" class="page">
+        <div class="card">
+          <h3>Таблица рейтинга</h3>
+          <table id="rankingTable" class="table">
+            <thead><tr><th>#</th><th>Пользователь</th><th>Очки</th></tr></thead>
+            <tbody>
+              <!-- sample rows -->
+              <tr><td>1</td><td>Alice</td><td>1250</td></tr>
+              <tr><td>2</td><td>Bob</td><td>1100</td></tr>
+              <tr><td>3</td><td>Charlie</td><td>900</td></tr>
+            </tbody>
+          </table>
+        </div>
       </section>
-      <section id="social" class="tabContent hidden">
-        <h2>Социальные задания</h2>
-        <p>Здесь будут задания и возможности общения.</p>
+
+      <!-- SOCIAL TASKS PAGE -->
+      <section id="page-tasks" class="page">
+        <div class="card">
+          <h3>Социальные задания</h3>
+          <ul id="tasksList">
+            <li>Пригласи друга — получи 100 токенов</li>
+            <li>Поделись результатом — получи 50 токенов</li>
+          </ul>
+        </div>
       </section>
-    </div>
+    </main>
+
+    <!-- bottom navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-target="page-training">Тренировка</button>
+      <button class="nav-btn" data-target="page-ranking">Рейтинг</button>
+      <button class="nav-btn" data-target="page-tasks">Задания</button>
+    </nav>
   </div>
 
-  <script src="script.js"></script>
+  <!-- app script -->
+  <script src="script.js" defer></script>
 </body>
 </html>
+
+
 
 
 
