@@ -253,9 +253,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const similarity = comparePoses(userPoseLandmarks, trainerPoseLandmarks);
 
       // Если похожесть > 0.75, начисляем очко
-      if (similarity > 0.75) {
+      if (similarity > 0.3) {
         currentScore++;
         scoreValue.textContent = currentScore;
+        console.log("Score incremented:", currentScore);
       }
 
       // Для отладки:
@@ -377,6 +378,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("buttons").style.display = "block";
   };
 });
+
 
 
 
