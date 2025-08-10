@@ -1,181 +1,73 @@
-/* Общие стили */
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
+body, html {
+  margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  z-index: 1000;
+}
+
+.centered {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   text-align: center;
-  background: #111;
-  color: #fff;
-  overflow: hidden;
+  font-size: 1.5rem;
+  flex-direction: column;
 }
 
-h1 {
-  margin-top: 20px;
+.spinner {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3498db;
+  border-radius: 50%;
+  width: 50px; height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
 }
 
-/* Кнопки */
-#buttons {
-  margin: 20px;
-  position: relative;
-  z-index: 10;
+@keyframes spin {
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
 }
 
-button {
-  padding: 10px 20px;
-  margin: 10px;
+/* Таб меню */
+#tabs {
+  display: flex;
+  justify-content: center;
+  background: #222;
+}
+
+#tabs button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 12px 20px;
   font-size: 16px;
-  background-color: #222;
-  border: none;
-  border-radius: 5px;
-  color: white;
+  cursor: pointer;
+  outline: none;
   transition: background-color 0.3s;
 }
 
-button:hover {
-  background-color: #444;
-  cursor: pointer;
+#tabs button.active,
+#tabs button:hover {
+  background-color: #3498db;
 }
 
-#finalOverlay button {
-  margin-top: 20px;
-  padding: 15px 30px;
-  font-size: 24px;
-  background-color: #444;
-  border: none;
-  border-radius: 10px;
-  color: white;
-  transition: background-color 0.3s;
+.tabContent {
+  padding: 15px;
 }
 
-#finalOverlay button:hover {
-  background-color: #666;
-  cursor: pointer;
-}
-
-/* Видео пользователя - по умолчанию во весь экран */
-#video {
- position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  z-index: 5; /* Уровень камеры */
-  transition: all 0.5s ease;
-  background: transparent;
-}
-
-/* Переход камеры в правый нижний угол */
-.small-video {
-  width: 80px !important;
-  height: 140px !important;   /* вертикальное */
-  bottom: 20px !important;
-  right: 20px !important;
-  top: auto !important;
-  left: auto !important;
-  position: fixed !important;
-  object-fit: cover !important;
-  z-index: 15 !important; /* Поднимаем слой */
-  border-radius: 10px;
-  border: 2px solid white;
-  box-shadow: 0 0 10px rgba(0,0,0,0.6);
-  transition: all 0.5s ease;
-}
-
-/* Canvas для отображения точек */
-#overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 6; /* Поверх камеры */
-  background: transparent;
-}
-
-#overlay.small-video {
-  width: 160px;
-  height: 120px;
-  bottom: 10px;
-  right: 10px;
-}
-
-/* Плашка для калибровки */
-.overlay-box {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 20px;
-  border-radius: 10px;
-  z-index: 10;
-  text-align: left;
-  max-width: 400px;
-}
-
-/* Видео тренера во весь экран */
-#trainerVideo {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  z-index: 4; /* Ниже камеры */
-  display: none;
-  background: black;
-}
-
-/* Отсчёт по центру */
-.center-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 20;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 5em;
-  font-weight: bold;
-  color: white;
-  background-color: rgba(0, 0, 0, 0.8);
+.tabContent.hidden {
   display: none;
 }
 
-/* Отображение очков */
-#scoreOverlay {
-  display: none;
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  font-size: 24px;
-  font-weight: bold;
-  padding: 15px 20px;
-  border-radius: 10px;
-  z-index: 50;
-}
-
-/* Финальный экран после тренировки */
-#finalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: black;
-  color: white;
-  font-size: 48px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-  display: none;
-}
 
 
 
