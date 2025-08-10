@@ -101,6 +101,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         if (results.poseLandmarks) {
           userPoseLandmarks = results.poseLandmarks;
+          console.log("User landmarks updated", results.poseLandmarks.length);
 
           // Рисуем красные точки пользователя
           for (const lm of userPoseLandmarks) {
@@ -191,6 +192,7 @@ window.addEventListener('DOMContentLoaded', () => {
       poseTrainer.onResults(results => {
         if (results.poseLandmarks) {
           trainerPoseLandmarks = results.poseLandmarks;
+          console.log("Trainer landmarks updated", results.poseLandmarks.length);
         }
       });
 
@@ -378,6 +380,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("buttons").style.display = "block";
   };
 });
+
 
 
 
