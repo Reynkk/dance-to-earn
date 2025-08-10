@@ -1,51 +1,72 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dance Trainer</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Тренировка с TON и Telegram</title>
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.min.js"></script>
 </head>
 <body>
-  <div id="finalOverlay">
-  <div>
-    <p>Ваш счёт: <span id="finalScoreValue">0</span></p>
-    <button id="restartBtn">Начать заново</button>
-  </div>
-</div>
-  <h1>Dance Trainer</h1>
-
-  <div id="buttons">
-    <button id="startTrainingBtn">Начать тренировку</button>
-    <button id="uploadVideoBtn">Загрузить видео для тренировки</button>
-    <input type="file" id="uploadVideoInput" accept="video/*" style="display:none" />
+  <!-- Загрузка -->
+  <div id="loadingScreen" class="overlay centered">
+    <div>
+      <div class="spinner"></div>
+      <div>Загрузка...</div>
+    </div>
   </div>
 
-  <div id="message"></div>
-
-  <div id="calibrationOverlay" class="overlay-box" style="display: none;">
-    <p id="calibrationMessage">Пожалуйста, пройдите калибровку</p>
-    <ul>
-      <li id="step1">▫ 1. Вы должны быть полностью в кадре</li>
-      <li id="step2">▫ 2. Поднимите обе руки</li>
-    </ul>
+  <!-- Авторизация Telegram -->
+  <div id="telegramAuth" class="overlay centered hidden">
+    <script async src="https://telegram.org/js/telegram-widget.js?15"
+      data-telegram-login="your_bot_username"
+      data-size="large"
+      data-userpic="false"
+      data-auth-url=""
+      data-request-access="write"
+      data-userpic="false"
+      data-lang="ru"
+      data-callback="onTelegramAuth"
+    ></script>
   </div>
 
-  <video id="video" playsinline muted></video>           <!-- камера пользователя -->
-<video id="trainerVideo" playsinline></video>    <!-- видео тренера -->
+  <!-- Подключение TON -->
+  <div id="tonConnect" class="overlay centered hidden">
+    <button id="connectTonBtn">Подключить TON-кошелек</button>
+    <div id="tonAddress"></div>
+  </div>
 
+  <!-- Основной интерфейс -->
+  <div id="app" class="hidden">
+    <div id="tabs">
+      <button class="tabBtn active" data-tab="training">Тренировка</button>
+      <button class="tabBtn" data-tab="top">ТОП</button>
+      <button class="tabBtn" data-tab="social">Социалка</button>
+    </div>
 
-  <canvas id="overlay"></canvas>
+    <div id="tabContent">
+      <section id="training" class="tabContent active">
+        <!-- Здесь твой основной тренировочный UI -->
+        <!-- Твой существующий контент для тренировки -->
+      </section>
+      <section id="top" class="tabContent hidden">
+        <h2>Таблица лидеров</h2>
+        <div id="leaderboard">Загрузка лидеров...</div>
+      </section>
+      <section id="social" class="tabContent hidden">
+        <h2>Социальные задания</h2>
+        <p>Здесь будут задания и возможности общения.</p>
+      </section>
+    </div>
+  </div>
 
-  <!-- Оверлеи -->
-  <div id="countdownOverlay" class="center-overlay"></div>
-  <div id="scoreOverlay">Ваш счёт: <span id="scoreValue">0</span></div>
-
-  <script src="script.js" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>
+
+
 
 
 
